@@ -1,0 +1,49 @@
+{
+  "name": "powerbi-portal",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.90.1",
+    "@vimeo/player": "^2.30.1",
+    "bcryptjs": "^3.0.3",
+    "d3-geo": "^3.1.1",
+    "exceljs": "^4.4.0",
+    "file-saver": "^2.0.5",
+    "html-to-image": "^1.11.13",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^4.2.0",
+    "jspdf-autotable": "^5.0.7",
+    "lucide-react": "^0.562.0",
+    "next": "16.1.1",
+    "pdfkit": "^0.17.2",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "react-youtube": "^10.1.0",
+    "recharts": "^3.8.0",
+    "svg-to-pdfkit": "^0.1.8",
+    "topojson-client": "^3.1.0",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.2.0",
+    "@tailwindcss/postcss": "^4",
+    "@types/d3-geo": "^3.1.0",
+    "@types/node": "^20",
+    "@types/pdfkit": "^0.17.5",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@types/topojson-client": "^3.1.5",
+    "autoprefixer": "^10.4.24",
+    "eslint": "^9",
+    "eslint-config-next": "16.1.1",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}
