@@ -36,9 +36,9 @@ import {
     ListCheck,
 } from "lucide-react";
 
-import {BasePacientesPage} from "@/components/Pacientes/BasePacientesPage";
-import {CadastroPacientePage} from "@/components/Pacientes/CadastroPacientePage";
-import {VisualizacaoPacientesPage} from "@/components/Pacientes/VisualizacaoPacientesPage";
+import { BasePacientesPage } from "@/components/Pacientes/BasePacientesPage";
+import { CadastroPacientePage } from "@/components/Pacientes/CadastroPacientePage";
+import { VisualizacaoPacientesPage } from "@/components/Pacientes/VisualizacaoPacientesPage";
 /* =========================================================
    TYPES / DATA
 ========================================================= */
@@ -1139,7 +1139,7 @@ export default function PortalClient() {
         const rgb = hexToRgb(accent);
 
         const inputBase =
-            "w-full h-11 rounded-xl bg-white/95 text-slate-900 placeholder:text-slate-400 " +
+            "w-full h-11 rounded-xl  text-slate-900 placeholder:text-slate-400 " +
             "border border-white/25 outline-none transition " +
             "focus-visible:ring-4 focus-visible:ring-offset-0";
 
@@ -1175,42 +1175,11 @@ export default function PortalClient() {
                 {/* overlays (deixa com cara “empresa grande” e legível) */}
                 <div className="absolute inset-0 bg-black/55" />
                 <div
-                    className="absolute inset-0"
-                    style={{
-                        background:
-                            "radial-gradient(70% 60% at 18% 22%, rgb(var(--accent-rgb) / 0.22) 0%, transparent 62%)," +
-                            "linear-gradient(180deg, #baa391 0%, #baa391 45%, #baa391 100%)",
-                    }}
+                    className="absolute inset-0 bg-[#F4F6F8]"
+
                 />
 
-                {/* TOP BAR discreta */}
-                <div className="absolute left-4 right-4 top-4 sm:left-8 sm:right-8 sm:top-6 flex items-center justify-between z-10">
-                    <div className="flex items-center gap-3">
-                        <div
-                            className="h-11 w-11  grid place-items-center overflow-hidden"
-                        // style={{
-                        //     background: "rgba(255,255,255,0.08)",
-                        //     borderColor: "rgba(255,255,255,0.14)",
-                        //     backdropFilter: "blur(10px)",
-                        //     WebkitBackdropFilter: "blur(10px)",
-                        // }}
-                        >
-                            <Image src="/logo2.png" alt="AYA" width={100} height={100} priority />
-                        </div>
-                        <div className="leading-tight">
-                            <div className="text-[13px] font-semibold text-white">BD Odontologia</div>
-                            <div className="text-[12px] text-white/65 -mt-[1px]">Dra Bruna D'Amaro Dosi</div>
-                        </div>
-                    </div>
 
-                    {/* <button
-                        type="button"
-                        onClick={() => setShowSupport(true)}
-                        className="text-[12px] font-semibold text-white/70 hover:text-white underline underline-offset-4"
-                    >
-                        Suporte
-                    </button> */}
-                </div>
 
                 {/* CAIXA CENTRAL */}
                 <div className="relative z-10 min-h-[100svh] supports-[height:100dvh]:min-h-[100dvh] flex items-center justify-center px-4 py-10">
@@ -1225,23 +1194,30 @@ export default function PortalClient() {
                         /> */}
 
                         <div
-                            className="relative rounded-3xl border overflow-hidden shadow-[0_35px_90px_-50px_rgba(0,0,0,0.95)]"
+                            className="relative overflow-hidden rounded-[28px] border border-white/10 bg-[#b79f8d] shadow-[0_35px_90px_-45px_rgba(0,0,0,0.95)]"
                             style={{
-                                borderColor: "rgba(255,255,255,0.18)",
-                                background: "rgba(161, 136, 108, 0.88)",
-                                backdropFilter: "blur(16px)",
-                                WebkitBackdropFilter: "blur(16px)",
+                                backdropFilter: "blur(18px)",
+                                WebkitBackdropFilter: "blur(18px)",
                             }}
                         >
-                            {/* <div className="h-1.5 w-full" style={{ background: "var(--accent)" }} /> */}
+                            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.16),transparent_42%)] pointer-events-none" />
+                            <div className="absolute inset-x-0 top-0 h-px bg-white/20 pointer-events-none" />
 
-                            <div className="p-6 sm:p-8">
-                                <div className="mb-6">
-                                    <div className="text-[24px] sm:text-[28px] font-semibold tracking-tight text-white leading-tight">
-                                        BD Odontologia
+                            <div className="relative p-6 sm:p-8">
+                                <div className="mb-6 flex flex-col items-center text-center">
+                                    <div
+                                        className="mb-4 grid h-16 w-16 place-items-center"
+                                    >
+                                        <Image src="/bg.png" alt="BD Odontologia" width={100} height={100} priority />
                                     </div>
-                                    <div className="mt-2 text-[13px] text-white/65">
-                                        Use suas credenciais para acessar o ambiente.
+
+                                    <div className="space-y-1">
+                                        <h1 className="text-[18px] font-semibold tracking-[0.02em] text-white">
+                                            BD Odontologia
+                                        </h1>
+                                        <p className="text-[13px] text-white/70">
+                                            Dra Bruna D&apos;Amaro Dosi
+                                        </p>
                                     </div>
                                 </div>
 
@@ -1253,13 +1229,16 @@ export default function PortalClient() {
                                     }}
                                 >
                                     <div className="space-y-2">
-                                        <label htmlFor="login" className="text-[12px] font-semibold text-white/80">
-                                            Login <span className="text-red-400">*</span>
+                                        <label
+                                            htmlFor="login"
+                                            className="text-[12px] font-medium tracking-[0.02em] text-white/85"
+                                        >
+                                            Login <span className="text-red-300">*</span>
                                         </label>
 
-                                        <div className="relative">
-                                            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-white/45">
-                                                <User className="w-4 h-4" />
+                                        <div className="group relative">
+                                            <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-white/45 transition-colors group-focus-within:text-white/80">
+                                                <User className="h-4 w-4" />
                                             </div>
 
                                             <input
@@ -1272,7 +1251,13 @@ export default function PortalClient() {
                                                 autoCapitalize="none"
                                                 spellCheck={false}
                                                 required
-                                                className={`${inputBase} pl-10 pr-3`}
+                                                className={[
+                                                    inputBase,
+                                                    "h-12 rounded-2xl border border-white/15 bg-white/10 pl-10 pr-3 text-white placeholder:text-white/40",
+                                                    "transition-all duration-200",
+                                                    "hover:border-white/25 hover:bg-white/[0.12]",
+                                                    "focus:border-white/35 focus:bg-white/[0.14] focus:ring-2 focus:ring-white/10",
+                                                ].join(" ")}
                                                 placeholder="Digite seu login"
                                                 aria-invalid={!!error}
                                                 aria-describedby={error ? "login-error" : undefined}
@@ -1281,13 +1266,16 @@ export default function PortalClient() {
                                     </div>
 
                                     <div className="space-y-2">
-                                        <label htmlFor="senha" className="text-[12px] font-semibold text-white/80">
-                                            Senha <span className="text-red-400">*</span>
+                                        <label
+                                            htmlFor="senha"
+                                            className="text-[12px] font-medium tracking-[0.02em] text-white/85"
+                                        >
+                                            Senha <span className="text-red-300">*</span>
                                         </label>
 
-                                        <div className="relative">
-                                            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-white/45">
-                                                <Lock className="w-4 h-4" />
+                                        <div className="group relative">
+                                            <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-white/45 transition-colors group-focus-within:text-white/80">
+                                                <Lock className="h-4 w-4" />
                                             </div>
 
                                             <input
@@ -1298,7 +1286,13 @@ export default function PortalClient() {
                                                 autoComplete="current-password"
                                                 type={showPassword ? "text" : "password"}
                                                 required
-                                                className={`${inputBase} pl-10 pr-11`}
+                                                className={[
+                                                    inputBase,
+                                                    "h-12 rounded-2xl border border-white/15 bg-white/10 pl-10 pr-12 text-white placeholder:text-white/40",
+                                                    "transition-all duration-200",
+                                                    "hover:border-white/25 hover:bg-white/[0.12]",
+                                                    "focus:border-white/35 focus:bg-white/[0.14] focus:ring-2 focus:ring-white/10",
+                                                ].join(" ")}
                                                 placeholder="Digite sua senha"
                                                 aria-invalid={!!error}
                                                 aria-describedby={error ? "login-error" : undefined}
@@ -1307,20 +1301,16 @@ export default function PortalClient() {
                                             <button
                                                 type="button"
                                                 onClick={() => setShowPassword((v) => !v)}
-                                                className="absolute right-2 top-1/2 -translate-y-1/2 h-9 w-9 rounded-lg border grid place-items-center text-white/70 hover:text-white transition active:scale-[0.98]"
-                                                style={{
-                                                    borderColor: "rgba(255,255,255,0.20)",
-                                                    background: "rgba(255,255,255,0.08)",
-                                                }}
+                                                className="absolute right-2 top-1/2 grid h-9 w-9 -translate-y-1/2 place-items-center rounded-xl border border-white/15 bg-white/10 text-white/70 transition hover:bg-white/15 hover:text-white active:scale-[0.98]"
                                                 aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
                                             >
-                                                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                                             </button>
                                         </div>
                                     </div>
 
                                     <div className="flex items-center justify-between gap-3 pt-1">
-                                        <label className="flex items-center gap-2 text-[12px] text-white/70 select-none">
+                                        <label className="flex cursor-pointer items-center gap-2 text-[12px] text-white/72">
                                             <input
                                                 type="checkbox"
                                                 className="h-4 w-4 rounded border border-white/25 bg-transparent"
@@ -1333,7 +1323,7 @@ export default function PortalClient() {
                                         <button
                                             type="button"
                                             onClick={() => setShowSupport(true)}
-                                            className="text-[12px] font-semibold text-white/70 hover:text-white underline underline-offset-4"
+                                            className="text-[12px] font-medium text-white/75 transition hover:text-white"
                                         >
                                             Esqueci minha senha
                                         </button>
@@ -1342,15 +1332,10 @@ export default function PortalClient() {
                                     {error && (
                                         <div
                                             id="login-error"
-                                            className="rounded-2xl px-4 py-3 text-sm flex items-start gap-2"
-                                            style={{
-                                                border: "1px solid rgba(239,68,68,0.35)",
-                                                background: "rgba(239,68,68,0.10)",
-                                                color: "#fecaca",
-                                            }}
+                                            className="flex items-start gap-2 rounded-2xl border border-red-300/25 bg-red-400/10 px-4 py-3 text-sm text-red-100"
                                             role="alert"
                                         >
-                                            <span className="mt-[6px] inline-block h-2 w-2 rounded-full bg-red-300/90" />
+                                            <span className="mt-[6px] inline-block h-2 w-2 rounded-full bg-red-300" />
                                             <span>{error}</span>
                                         </div>
                                     )}
@@ -1358,24 +1343,25 @@ export default function PortalClient() {
                                     <button
                                         type="submit"
                                         disabled={loginLoading}
+                                        aria-busy={loginLoading}
                                         className={[
-                                            "w-full h-11 rounded-xl font-semibold text-sm transition",
-                                            "disabled:opacity-60 disabled:cursor-not-allowed",
-                                            "active:scale-[0.99]",
-                                            "hover:brightness-[1.04]",
+                                            "h-12 w-full rounded-2xl text-sm font-semibold text-white transition-all duration-200",
+                                            "disabled:cursor-not-allowed disabled:opacity-60",
+                                            "hover:-translate-y-[1px] hover:brightness-[1.03]",
+                                            "active:translate-y-0 active:scale-[0.995]",
                                         ].join(" ")}
                                         style={{
-                                            background: "#ceb39e",
-                                            color: "#fff",
-                                            boxShadow: "0 16px 40px -18px rgb(var(--accent-rgb) / 0.55)",
+                                            background:
+                                                "linear-gradient(180deg, rgba(214,187,165,1) 0%, rgba(198,168,144,1) 100%)",
+                                            boxShadow: "0 18px 40px -18px rgba(0,0,0,0.45)",
                                         }}
                                     >
                                         {loginLoading ? "Entrando..." : "Entrar"}
                                     </button>
 
-                                    <div className="pt-2 text-[12px] text-white/55 flex items-center gap-2">
-                                        <ShieldCheck className="w-4 h-4" />
-                                        Ambiente seguro • Acesso monitorado
+                                    <div className="flex items-center gap-2 border-t border-white/10 pt-3 text-[12px] text-white/55">
+                                        <ShieldCheck className="h-4 w-4" />
+                                        <span>Ambiente seguro • Acesso monitorado</span>
                                     </div>
                                 </form>
                             </div>
@@ -1460,7 +1446,7 @@ export default function PortalClient() {
                         className="flex items-center gap-2 rounded-xl px-2 py-2 hover:bg-white/10 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/35"
                         aria-label="Ir para Home"
                     >
-                        <Image src="/logo2.png" alt="AYA" width={40} height={40} />
+                        <Image src="/bg.png" alt="AYA" width={40} height={40} />
                         <div className="hidden sm:flex flex-col text-left leading-tight">
                             <div className="text-[13px] font-semibold text-white">BD Odontologia</div>
                             <div className="text-[11px] text-white/65">Dra Bruna D'Amaro Dosi</div>
