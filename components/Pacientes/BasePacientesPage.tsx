@@ -409,9 +409,9 @@ export function BasePacientesPage() {
               <div className={UI.headerTitle} style={{ color: T.text }}>
                 Base de pacientes
               </div>
-              {/* <div className={cx(UI.headerSub, "mt-1 max-w-3xl")} style={{ color: T.text3 }}>
+              <div className={cx(UI.headerSub, "mt-1 l")} style={{ color: T.text3 }}>
                 Consulte a base operacional de pacientes, selecione um registro na lista e abra o painel lateral para atualizar dados cadastrais, observações e andamento do fluxo.
-              </div> */}
+              </div>
 
               <div className="mt-3 flex flex-wrap items-center gap-2">
                 <Pill active>Total: {total}</Pill>

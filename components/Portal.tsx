@@ -259,7 +259,7 @@ function Button({
         "h-11 px-4 rounded-xl text-sm font-semibold transition inline-flex items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-2 disabled:opacity-50 disabled:cursor-not-allowed";
     const styles =
         variant === "primary"
-            ? "bg-[#2FB26A] text-white hover:bg-[#1F8E53] focus-visible:ring-[rgba(47,178,106,0.35)]"
+            ? "bg-[#baa391] text-white hover:bg-[#baa391] focus-visible:ring-[rgba(47,178,106,0.35)]"
             : "bg-black/[0.04] text-black/80 hover:bg-black/[0.06] focus-visible:ring-black/15 border border-black/10";
 
     return (
@@ -1168,16 +1168,13 @@ export default function PortalClient() {
                 </video> */}
 
                 <img
-                    src="/fundo.png"
+                    src="/fd2.png"
                     alt="Foto de apresentação"
                     className="absolute inset-0 w-full h-full object-cover"
                 />
                 {/* overlays (deixa com cara “empresa grande” e legível) */}
                 <div className="absolute inset-0 bg-black/55" />
-                <div
-                    className="absolute inset-0 bg-[#F4F6F8]"
-
-                />
+                
 
 
 
