@@ -959,7 +959,7 @@ export default function PortalClient() {
     useEffect(() => {
         if (!user) return;
         const allowedIds = new Set(allAllowedItems.map((x) => x.id));
-        if (!allowedIds.has(active)) setActive("home");
+        if (!allowedIds.has(active)) setActive("dash");
     }, [user, active, allAllowedItems]);
 
     const q = navQuery.trim().toLowerCase();
@@ -1009,7 +1009,7 @@ export default function PortalClient() {
             setStats(fixedStats);
 
             const savedTab = localStorage.getItem(STORAGE.activeTab);
-            setActive(savedTab || "home");
+            setActive(savedTab || "dash");
         } catch {
             setError("Erro de conexão com o servidor");
         } finally {

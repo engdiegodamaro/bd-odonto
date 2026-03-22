@@ -166,7 +166,7 @@ function Pill({
     <button
       type="button"
       onClick={onClick}
-      className="inline-flex items-center h-8 px-3 text-[11px] font-medium border rounded-xl transition-all hover:-translate-y-[1px]"
+      className="inline-flex items-center h-8 px-3 text-[11px] font-medium border rounded-lg transition-all hover:-translate-y-[1px]"
       style={{
         borderColor: active ? T.accentStrong : T.border,
         background: active ? T.accentSoft : T.cardSoft,
@@ -181,7 +181,7 @@ function Pill({
 function StageChip({ label, active = false }: { label: string; active?: boolean }) {
   return (
     <span
-      className="inline-flex items-center px-2.5 py-1.5 rounded-xl text-[11px] font-medium border"
+      className="inline-flex items-center px-2.5 py-1.5 rounded-lg text-[11px] font-medium border"
       style={{
         borderColor: active ? T.accentStrong : T.border,
         background: active ? T.accentSoft : T.cardSoft,
@@ -253,7 +253,7 @@ function StatCard({
     <button
       type="button"
       onClick={onClick}
-      className="border rounded-[20px] p-4 text-left transition-all hover:-translate-y-[2px]"
+      className="border rounded-lg p-4 text-left transition-all hover:-translate-y-[2px]"
       style={{
         borderColor: active ? T.accentStrong : T.border,
         background: active ? "linear-gradient(180deg, rgba(186,163,145,0.11), rgba(255,255,255,1))" : T.card,
@@ -272,7 +272,7 @@ function StatCard({
           </div>
         </div>
         <div
-          className="w-11 h-11 rounded-2xl border flex items-center justify-center"
+          className="w-11 h-11 rounded-lg border flex items-center justify-center"
           style={{ borderColor: active ? T.accentStrong : T.border, background: active ? T.accentSoft : T.cardSoft, color: T.accent }}
         >
           {icon}
@@ -289,7 +289,7 @@ function PatientCard({ patient, active, onClick }: { patient: Patient; active?: 
     <button
       type="button"
       onClick={onClick}
-      className="w-full text-left p-4 rounded-[18px] border transition-all hover:-translate-y-[2px]"
+      className="w-full text-left p-4 rounded-lg border transition-all hover:-translate-y-[2px]"
       style={{
         borderColor: active ? T.accentStrong : T.border,
         background: active ? "linear-gradient(180deg, rgba(186,163,145,0.09), rgba(255,255,255,1))" : T.card,
@@ -297,7 +297,7 @@ function PatientCard({ patient, active, onClick }: { patient: Patient; active?: 
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex items-start gap-3">
-          <div className="w-11 h-11 rounded-2xl border flex items-center justify-center shrink-0" style={{ borderColor: T.border, background: T.cardSoft }}>
+          <div className="w-11 h-11 rounded-lg border flex items-center justify-center shrink-0" style={{ borderColor: T.border, background: T.cardSoft }}>
             <UserRound className="w-5 h-5" style={{ color: T.accent }} />
           </div>
           <div className="min-w-0">
@@ -373,7 +373,7 @@ function PatientDrawer({
           <button
             type="button"
             onClick={onClose}
-            className="inline-flex h-10 w-10 items-center justify-center rounded-xl border transition-all hover:-translate-y-[1px]"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-lg border transition-all hover:-translate-y-[1px]"
             style={{ borderColor: T.border, background: T.cardSoft, color: T.text2 }}
             aria-label="Fechar drawer"
           >
@@ -383,14 +383,14 @@ function PatientDrawer({
 
         <div className="flex-1 overflow-y-auto p-5">
           {!patient ? (
-            <div className="rounded-2xl border p-6 text-sm text-center" style={{ borderColor: T.border, background: T.cardSoft, color: T.text3 }}>
+            <div className="rounded-lg border p-6 text-sm text-center" style={{ borderColor: T.border, background: T.cardSoft, color: T.text3 }}>
               Selecione um paciente para visualizar o detalhe.
             </div>
           ) : (
             <div className="space-y-4">
-              <div className="border bg-white rounded-[20px] p-4 shadow-[0_10px_30px_rgba(11,18,32,0.04)]" style={{ borderColor: T.border }}>
+              <div className="border bg-white rounded-lg p-4 shadow-[0_10px_30px_rgba(11,18,32,0.04)]" style={{ borderColor: T.border }}>
                 <div className="flex items-start gap-3">
-                  <div className="w-12 h-12 rounded-2xl border flex items-center justify-center shrink-0" style={{ borderColor: T.border, background: T.cardSoft }}>
+                  <div className="w-12 h-12 rounded-lg border flex items-center justify-center shrink-0" style={{ borderColor: T.border, background: T.cardSoft }}>
                     <UserRound className="w-5 h-5" style={{ color: T.accent }} />
                   </div>
                   <div className="min-w-0 flex-1">
@@ -405,7 +405,7 @@ function PatientDrawer({
                 </div>
               </div>
 
-              <div className="rounded-2xl border p-4" style={{ borderColor: T.border, background: T.card }}>
+              <div className="rounded-lg border p-4" style={{ borderColor: T.border, background: T.card }}>
                 <div className="text-[11px] uppercase font-medium tracking-[0.04em]" style={{ color: T.text3 }}>
                   Contato
                 </div>
@@ -419,7 +419,7 @@ function PatientDrawer({
                 </div>
               </div>
 
-              <div className="rounded-2xl border p-4" style={{ borderColor: T.border, background: T.card }}>
+              <div className="rounded-lg border p-4" style={{ borderColor: T.border, background: T.card }}>
                 <div className="text-[11px] uppercase font-medium tracking-[0.04em]" style={{ color: T.text3 }}>
                   Status operacional
                 </div>
@@ -434,7 +434,7 @@ function PatientDrawer({
                 </div>
               </div>
 
-              <div className="rounded-2xl border p-4" style={{ borderColor: T.border, background: T.card }}>
+              <div className="rounded-lg border p-4" style={{ borderColor: T.border, background: T.card }}>
                 <div className="text-[11px] uppercase font-medium tracking-[0.04em]" style={{ color: T.text3 }}>
                   Linha do tempo do fluxo
                 </div>
@@ -469,7 +469,7 @@ function PatientDrawer({
                 </div>
               </div>
 
-              <div className="rounded-2xl border p-4" style={{ borderColor: T.border, background: T.card }}>
+              <div className="rounded-lg border p-4" style={{ borderColor: T.border, background: T.card }}>
                 <div className="text-[11px] uppercase font-medium tracking-[0.04em]" style={{ color: T.text3 }}>
                   Observações
                 </div>
@@ -613,7 +613,7 @@ export function VisualizacaoPacientesPage() {
     <>
       <section className="w-full min-w-0" style={{ background: T.bg, color: T.text }}>
         <div className="mx-auto w-full max-w-[1540px] px-4 sm:px-6 py-6">
-          <div className="border bg-white rounded-[20px] p-4 sm:p-5 shadow-[0_10px_30px_rgba(11,18,32,0.04)]" style={{ borderColor: T.border }}>
+          <div className="border bg-white rounded-lg p-4 sm:p-5 shadow-[0_10px_30px_rgba(11,18,32,0.04)]" style={{ borderColor: T.border }}>
             <div className="flex items-start justify-between gap-4 flex-wrap">
               <div className="min-w-0">
                 <div className="text-base sm:text-lg font-semibold tracking-tight">Dashboard de pacientes</div>
@@ -642,7 +642,7 @@ export function VisualizacaoPacientesPage() {
               <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  className="inline-flex items-center gap-2 h-10 px-4 rounded-xl text-sm font-medium transition-all border"
+                  className="inline-flex items-center gap-2 h-10 px-4 rounded-lg text-sm font-medium transition-all border"
                   onClick={() => setViewMode("cards")}
                   style={{
                     borderColor: viewMode === "cards" ? T.accentStrong : T.border,
@@ -654,7 +654,7 @@ export function VisualizacaoPacientesPage() {
                 </button>
                 <button
                   type="button"
-                  className="inline-flex items-center gap-2 h-10 px-4 rounded-xl text-sm font-medium transition-all border"
+                  className="inline-flex items-center gap-2 h-10 px-4 rounded-lg text-sm font-medium transition-all border"
                   onClick={() => setViewMode("table")}
                   style={{
                     borderColor: viewMode === "table" ? T.accentStrong : T.border,
@@ -676,7 +676,7 @@ export function VisualizacaoPacientesPage() {
                   <input
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
-                    className="w-full h-11 pl-11 pr-3 border bg-white text-sm outline-none transition rounded-xl"
+                    className="w-full h-11 pl-11 pr-3 border bg-white text-sm outline-none transition rounded-lg"
                     style={{ borderColor: T.border }}
                     placeholder="Pesquisar paciente"
                   />
@@ -691,7 +691,7 @@ export function VisualizacaoPacientesPage() {
                 <select
                   value={stageFilter}
                   onChange={(e) => setStageFilter(e.target.value as StepKey | "todos")}
-                  className="mt-1 w-full h-11 px-3 border bg-white text-sm outline-none transition rounded-xl"
+                  className="mt-1 w-full h-11 px-3 border bg-white text-sm outline-none transition rounded-lg"
                   style={{ borderColor: T.border }}
                 >
                   <option value="todos">Todas as etapas</option>
@@ -710,7 +710,7 @@ export function VisualizacaoPacientesPage() {
                 <select
                   value={quickFilter}
                   onChange={(e) => setQuickFilter(e.target.value as QuickFilter)}
-                  className="mt-1 w-full h-11 px-3 border bg-white text-sm outline-none transition rounded-xl"
+                  className="mt-1 w-full h-11 px-3 border bg-white text-sm outline-none transition rounded-lg"
                   style={{ borderColor: T.border }}
                 >
                   <option value="todos">Todos</option>
@@ -728,7 +728,7 @@ export function VisualizacaoPacientesPage() {
                 <select
                   value={sortMode}
                   onChange={(e) => setSortMode(e.target.value as SortMode)}
-                  className="mt-1 w-full h-11 px-3 border bg-white text-sm outline-none transition rounded-xl"
+                  className="mt-1 w-full h-11 px-3 border bg-white text-sm outline-none transition rounded-lg"
                   style={{ borderColor: T.border }}
                 >
                   <option value="recentes">Mais recentes</option>
@@ -775,7 +775,7 @@ export function VisualizacaoPacientesPage() {
           </div>
 
           <div className="mt-4 space-y-4">
-            <div className="border bg-white rounded-[20px] p-4 shadow-[0_10px_30px_rgba(11,18,32,0.04)]" style={{ borderColor: T.border }}>
+            <div className="border bg-white rounded-lg p-4 shadow-[0_10px_30px_rgba(11,18,32,0.04)]" style={{ borderColor: T.border }}>
               <div className="flex items-start justify-between gap-4 flex-wrap">
                 <div>
                   <div className="text-sm font-semibold">Mapa do funil por etapa</div>
@@ -798,7 +798,7 @@ export function VisualizacaoPacientesPage() {
                       key={item.key}
                       type="button"
                       onClick={() => setStageFilter(active ? "todos" : item.key)}
-                      className="p-4 rounded-[18px] border text-left transition-all hover:-translate-y-[2px]"
+                      className="p-4 rounded-lg border text-left transition-all hover:-translate-y-[2px]"
                       style={{
                         borderColor: active ? T.accentStrong : T.border,
                         background: active ? "linear-gradient(180deg, rgba(186,163,145,0.10), rgba(255,255,255,1))" : T.cardSoft,
@@ -824,7 +824,7 @@ export function VisualizacaoPacientesPage() {
               </div>
             </div>
 
-            <div className="border bg-white rounded-[20px] p-4 shadow-[0_10px_30px_rgba(11,18,32,0.04)]" style={{ borderColor: T.border }}>
+            <div className="border bg-white rounded-lg p-4 shadow-[0_10px_30px_rgba(11,18,32,0.04)]" style={{ borderColor: T.border }}>
               <div className="flex items-start justify-between gap-4 flex-wrap">
                 <div>
                   <div className="text-sm font-semibold">Pipeline visual</div>
@@ -848,12 +848,12 @@ export function VisualizacaoPacientesPage() {
               <div className="mt-4 overflow-x-auto">
                 <div className="flex gap-3 min-w-max pb-1">
                   {boardByStage.map((column) => (
-                    <div key={column.key} className="w-[280px] shrink-0 rounded-[18px] border p-3" style={{ borderColor: T.border, background: T.cardSoft }}>
+                    <div key={column.key} className="w-[280px] shrink-0 rounded-lg border p-3" style={{ borderColor: T.border, background: T.cardSoft }}>
                       <button type="button" onClick={() => setStageFilter(stageFilter === column.key ? "todos" : column.key)} className="w-full text-left">
                         <div className="flex items-center justify-between gap-3">
                           <div className="text-sm font-semibold">{column.label}</div>
                           <div
-                            className="inline-flex items-center justify-center min-w-8 h-8 px-2 rounded-xl border text-xs font-semibold"
+                            className="inline-flex items-center justify-center min-w-8 h-8 px-2 rounded-lg border text-xs font-semibold"
                             style={{ borderColor: T.border, background: T.card, color: T.accent }}
                           >
                             {column.total}
@@ -898,7 +898,7 @@ export function VisualizacaoPacientesPage() {
               </div>
             </div>
 
-            <div className="border bg-white rounded-[20px] p-4 shadow-[0_10px_30px_rgba(11,18,32,0.04)]" style={{ borderColor: T.border }}>
+            <div className="border bg-white rounded-lg p-4 shadow-[0_10px_30px_rgba(11,18,32,0.04)]" style={{ borderColor: T.border }}>
               <div className="flex items-start justify-between gap-4 flex-wrap">
                 <div>
                   <div className="text-sm font-semibold">Base filtrada</div>
@@ -917,7 +917,7 @@ export function VisualizacaoPacientesPage() {
                     Carregando pacientes…
                   </div>
                 ) : filteredRows.length === 0 ? (
-                  <div className="rounded-[18px] border p-8 text-center text-sm" style={{ borderColor: T.border, color: T.text3, background: T.cardSoft }}>
+                  <div className="rounded-lg border p-8 text-center text-sm" style={{ borderColor: T.border, color: T.text3, background: T.cardSoft }}>
                     Nenhum paciente encontrado para os filtros aplicados.
                   </div>
                 ) : viewMode === "cards" ? (
@@ -932,7 +932,7 @@ export function VisualizacaoPacientesPage() {
                     ))}
                   </div>
                 ) : (
-                  <div className="overflow-hidden rounded-[18px] border" style={{ borderColor: T.border }}>
+                  <div className="overflow-hidden rounded-lg border" style={{ borderColor: T.border }}>
                     <div className="overflow-x-auto">
                       <table className="w-full min-w-[860px] border-separate border-spacing-0">
                         <thead>
@@ -961,7 +961,7 @@ export function VisualizacaoPacientesPage() {
                               >
                                 <td className="px-4 py-3 border-b" style={{ borderColor: T.border }}>
                                   <div className="flex items-start gap-3">
-                                    <div className="w-9 h-9 rounded-xl border flex items-center justify-center shrink-0" style={{ borderColor: T.border, background: T.cardSoft }}>
+                                    <div className="w-9 h-9 rounded-lg border flex items-center justify-center shrink-0" style={{ borderColor: T.border, background: T.cardSoft }}>
                                       <UserRound className="w-4 h-4" style={{ color: T.accent }} />
                                     </div>
                                     <div className="min-w-0">
