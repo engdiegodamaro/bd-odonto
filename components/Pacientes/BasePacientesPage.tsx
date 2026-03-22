@@ -1,113 +1,171 @@
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
-  CheckCircle2,
-  ClipboardList,
-  Edit3,
-  Loader2,
+  ChevronRight,
+  FileCheck2,
   Phone,
-  Plus,
-  RefreshCw,
-  Save,
+  IdCard,
   Search,
-  ShieldCheck,
   UserRound,
   X,
+  Loader2,
+  FileText,
+  ClipboardList,
 } from "lucide-react";
 
-const cx = (...parts: Array<string | false | null | undefined>) => parts.filter(Boolean).join(" ");
+const cx = (...p: Array<string | false | null | undefined>) => p.filter(Boolean).join(" ");
 
 const T = {
-  bg: "#F3F6F8",
-  surface: "#FFFFFF",
-  surface2: "#FAFBFC",
-  surface3: "#F7F9FB",
-  line: "rgba(15, 23, 42, 0.10)",
-  lineStrong: "rgba(15, 23, 42, 0.16)",
-  text: "#0F172A",
-  text2: "rgba(15, 23, 42, 0.76)",
-  text3: "rgba(15, 23, 42, 0.54)",
-  accent: "#14532D",
-  accent2: "#166534",
-  accentSoft: "rgba(20, 83, 45, 0.08)",
-  accentSoft2: "rgba(20, 83, 45, 0.14)",
-  accentSoft3: "rgba(20, 83, 45, 0.22)",
-  okBg: "rgba(22, 163, 74, 0.10)",
-  okBd: "rgba(22, 163, 74, 0.18)",
-  okTx: "#166534",
-  warnBg: "rgba(245, 158, 11, 0.10)",
-  warnBd: "rgba(245, 158, 11, 0.20)",
-  warnTx: "#92400E",
-  errBg: "rgba(220, 38, 38, 0.10)",
-  errBd: "rgba(220, 38, 38, 0.18)",
-  errTx: "#991B1B",
-  shadow: "0 18px 38px rgba(15, 23, 42, 0.08)",
+  bg: "#F4F6F8",
+  card: "#FFFFFF",
+  cardSoft: "#FBFCFD",
+  border: "rgba(17, 24, 39, 0.12)",
+  borderStrong: "rgba(17, 24, 39, 0.18)",
+  text: "#0B1220",
+  text2: "rgba(11, 18, 32, 0.70)",
+  text3: "rgba(11, 18, 32, 0.55)",
+  mutedBg: "rgba(17, 24, 39, 0.035)",
+
+  accent: "#baa391",
+  accent2: "#baa391",
+  accentSoft: "rgba(190, 142, 87, 0.17)",
+  accentRing: "rgba(17, 89, 35, 0.18)",
+
+  okBg: "rgba(16, 185, 129, 0.10)",
+  okBd: "rgba(16, 185, 129, 0.30)",
+  okTx: "#baa391",
+
+  errBg: "rgba(239, 68, 68, 0.10)",
+  errBd: "rgba(239, 68, 68, 0.30)",
+  errTx: "#7F1D1D",
 } as const;
 
 const UI = {
-  page: "min-h-screen w-full",
-  shell: "mx-auto w-full max-w-[1800px] px-4 py-5 sm:px-6 sm:py-6",
-  panel: "rounded-[26px] border bg-white",
+  page: "w-full min-w-0",
+  container: "mx-auto w-full max-w-[1480px] px-4 sm:px-6 py-6",
+  header: "border bg-white",
+  section: "border bg-white",
+  headerTitle: "text-base sm:text-lg font-semibold tracking-tight",
+  headerSub: "text-xs",
+  sectionTitle: "text-sm font-semibold",
+  sectionHint: "text-xs",
+  label: "text-[11px] font-medium",
+  help: "text-[11px]",
   input:
-    "h-11 w-full rounded-2xl border bg-white px-3.5 text-sm outline-none transition placeholder:text-slate-400 focus:ring-2 focus:ring-[rgba(20,83,45,0.14)]",
-  select:
-    "h-11 w-full rounded-2xl border bg-white px-3.5 text-sm outline-none transition focus:ring-2 focus:ring-[rgba(20,83,45,0.14)]",
+    "w-full h-10 px-3 border bg-white text-sm outline-none transition focus:ring-2 rounded-md",
   textarea:
-    "min-h-[120px] w-full rounded-2xl border bg-white px-3.5 py-3 text-sm outline-none transition resize-y focus:ring-2 focus:ring-[rgba(20,83,45,0.14)]",
-  label: "text-[11px] font-semibold uppercase tracking-[0.12em]",
-};
+    "w-full min-h-[110px] px-3 py-2 border bg-white text-sm outline-none transition focus:ring-2 rounded-md",
+  select:
+    "w-full h-10 px-3 border bg-white text-sm outline-none transition focus:ring-2 rounded-md",
+} as const;
 
 const PATIENT_STEPS = [
-  { key: "agendamento", label: "Agendamento" },
-  { key: "solicitacao_exames", label: "Solicitação de exames" },
-  { key: "exames_realizados", label: "Exames realizados" },
-  { key: "planejamento_apresentado", label: "Planejamento apresentado" },
-  { key: "planejamento_aprovado", label: "Planejamento aprovado" },
-  { key: "execucao_agendada", label: "Agendamento de execução" },
-  { key: "contrato_formalizado", label: "Contrato formalizado" },
-  { key: "termo_conclusao", label: "Termo de conclusão" },
+  { key: "agendamento", label: "Agendamento", optional: false },
+  { key: "solicitacao_exames", label: "Solicitação de exames", optional: false },
+  { key: "exames_realizados", label: "Exames realizados", optional: false },
+  { key: "planejamento_apresentado", label: "Planejamento apresentado", optional: false },
+  { key: "planejamento_aprovado", label: "Planejamento aprovado", optional: false },
+  { key: "execucao_agendada", label: "Agendamento da execução", optional: false },
+  { key: "contrato_formalizado", label: "Contrato formalizado", optional: false },
+  { key: "termo_conclusao", label: "Termo de conclusão", optional: false },
   { key: "entrega_nf", label: "Entrega de NF", optional: true },
-  { key: "retornos_programados", label: "Retornos programados" },
+  { key: "retornos_programados", label: "Retornos programados", optional: false },
 ] as const;
 
 type StepKey = (typeof PATIENT_STEPS)[number]["key"];
 type PatientSteps = Record<StepKey, boolean>;
 
-type PatientRow = {
+type Patient = {
   id: string;
   nome_completo: string;
   celular: string;
   cpf: string;
   exige_nf: boolean;
-  etapas: PatientSteps;
+  observacoes: string | null;
   etapa_atual: StepKey | null;
-  observacoes?: string | null;
-  created_at?: string | null;
+  etapas: PatientSteps;
+  created_at?: string;
+  updated_at?: string;
 };
 
-type ApiListResponse = {
-  ok: boolean;
-  items?: Array<Partial<PatientRow>>;
-  error?: string;
-};
+function Btn({
+  tone = "primary",
+  loading,
+  disabled,
+  children,
+  className,
+  ...props
+}: React.ButtonHTMLAttributes<HTMLButtonElement> & {
+  tone?: "primary" | "secondary" | "danger";
+  loading?: boolean;
+}) {
+  const base =
+    "inline-flex items-center justify-center gap-2 h-10 px-4 text-sm font-semibold border rounded-md " +
+    "disabled:opacity-50 disabled:cursor-not-allowed transition active:translate-y-[0.5px]";
 
-type ApiItemResponse = {
-  ok: boolean;
-  item?: Partial<PatientRow>;
-  error?: string;
-};
+  const styles =
+    tone === "primary" ? "text-white" : tone === "danger" ? "text-white" : "bg-white";
 
-type EditorState = PatientRow;
-type TabKey = "resumo" | "etapas" | "edicao";
+  return (
+    <button
+      className={cx(base, styles, className)}
+      disabled={disabled || loading}
+      style={
+        tone === "primary"
+          ? { background: T.accent, borderColor: "rgba(17, 89, 35, 0.45)" }
+          : tone === "danger"
+          ? { background: "#DC2626", borderColor: "rgba(220, 38, 38, 0.55)" }
+          : { background: T.card, borderColor: T.border, color: T.text }
+      }
+      {...props}
+    >
+      {loading ? (
+        <>
+          <span className="w-4 h-4 rounded-full border-2 border-current border-t-transparent animate-spin" />
+          <span>Salvando…</span>
+        </>
+      ) : (
+        children
+      )}
+    </button>
+  );
+}
 
-const STEP_LABEL_BY_KEY = Object.fromEntries(PATIENT_STEPS.map((s) => [s.key, s.label])) as Record<StepKey, string>;
+function Pill({ children, active = false }: { children: React.ReactNode; active?: boolean }) {
+  return (
+    <span
+      className="inline-flex items-center h-7 px-2.5 text-[11px] font-medium border rounded-md"
+      style={{
+        borderColor: active ? "rgba(17, 89, 35, 0.22)" : T.border,
+        background: active ? T.accentSoft : T.cardSoft,
+        color: active ? T.accent : T.text2,
+      }}
+    >
+      {children}
+    </span>
+  );
+}
+
+function MsgBox({ m }: { m: { type: "ok" | "err"; text: string } | null }) {
+  if (!m) return null;
+  const s =
+    m.type === "ok"
+      ? { background: T.okBg, borderColor: T.okBd, color: T.okTx }
+      : { background: T.errBg, borderColor: T.errBd, color: T.errTx };
+
+  return (
+    <div className="text-sm px-3 py-2 border rounded-md" style={s}>
+      {m.text}
+    </div>
+  );
+}
 
 function digitsOnly(v: string) {
   return String(v || "").replace(/\D+/g, "");
 }
 
-function formatCPF(v: string) {
+function maskCPF(v: string) {
   const d = digitsOnly(v).slice(0, 11);
   return d
     .replace(/(\d{3})(\d)/, "$1.$2")
@@ -115,22 +173,30 @@ function formatCPF(v: string) {
     .replace(/(\d{3})(\d{1,2})$/, "$1-$2");
 }
 
-function formatCellphone(v: string) {
+function maskPhone(v: string) {
   const d = digitsOnly(v).slice(0, 11);
-  if (d.length <= 2) return d;
-  if (d.length <= 7) return `(${d.slice(0, 2)}) ${d.slice(2)}`;
-  if (d.length <= 10) return `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`;
-  return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
+  if (d.length <= 10) {
+    return d.replace(/(\d{2})(\d)/, "($1) $2").replace(/(\d{4})(\d)/, "$1-$2");
+  }
+  return d.replace(/(\d{2})(\d)/, "($1) $2").replace(/(\d{5})(\d)/, "$1-$2");
 }
 
-function emptySteps(): PatientSteps {
-  return PATIENT_STEPS.reduce((acc, step) => {
-    acc[step.key] = false;
-    return acc;
-  }, {} as PatientSteps);
+function normalizeSteps(input: any): PatientSteps {
+  return {
+    agendamento: Boolean(input?.agendamento),
+    solicitacao_exames: Boolean(input?.solicitacao_exames),
+    exames_realizados: Boolean(input?.exames_realizados),
+    planejamento_apresentado: Boolean(input?.planejamento_apresentado),
+    planejamento_aprovado: Boolean(input?.planejamento_aprovado),
+    execucao_agendada: Boolean(input?.execucao_agendada),
+    contrato_formalizado: Boolean(input?.contrato_formalizado),
+    termo_conclusao: Boolean(input?.termo_conclusao),
+    entrega_nf: Boolean(input?.entrega_nf),
+    retornos_programados: Boolean(input?.retornos_programados),
+  };
 }
 
-function deriveCurrentStep(steps: PatientSteps, exigeNF: boolean): StepKey | null {
+function getCurrentStep(steps: PatientSteps, exigeNF: boolean) {
   let current: StepKey | null = null;
   for (const step of PATIENT_STEPS) {
     if (step.optional && !exigeNF) continue;
@@ -139,961 +205,670 @@ function deriveCurrentStep(steps: PatientSteps, exigeNF: boolean): StepKey | nul
   return current;
 }
 
-function totalRelevantSteps(exigeNF: boolean) {
-  return PATIENT_STEPS.filter((step) => !step.optional || exigeNF).length;
+function getCurrentStepLabel(patient: Pick<Patient, "etapas" | "exige_nf" | "etapa_atual">) {
+  const stepKey = patient.etapa_atual || getCurrentStep(patient.etapas, patient.exige_nf);
+  return PATIENT_STEPS.find((step) => step.key === stepKey)?.label || "Cadastro inicial";
 }
 
-function countCompletedSteps(steps: PatientSteps, exigeNF: boolean) {
-  return PATIENT_STEPS.filter((step) => !step.optional || exigeNF).filter((step) => steps[step.key]).length;
+function getNextStepLabel(patient: Pick<Patient, "etapas" | "exige_nf">) {
+  const next = PATIENT_STEPS.find((step) => {
+    if (step.optional && !patient.exige_nf) return false;
+    return !patient.etapas[step.key];
+  });
+  return next?.label || "Fluxo concluído";
 }
 
-function nextPendingStep(row: PatientRow) {
-  return PATIENT_STEPS.find((step) => (!step.optional || row.exige_nf) && !row.etapas[step.key]) ?? null;
+function progressPercent(steps: PatientSteps, exigeNF: boolean) {
+  const relevant = PATIENT_STEPS.filter((step) => !step.optional || exigeNF);
+  const done = relevant.filter((step) => steps[step.key]).length;
+  return relevant.length ? Math.round((done / relevant.length) * 100) : 0;
 }
 
-function formatDateTime(iso?: string | null) {
-  if (!iso) return "—";
-  const d = new Date(iso);
+function formatDate(v?: string) {
+  if (!v) return "—";
+  const d = new Date(v);
   if (Number.isNaN(d.getTime())) return "—";
-  return new Intl.DateTimeFormat("pt-BR", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(d);
+  return d.toLocaleDateString("pt-BR");
 }
 
-function makePatient(data: Partial<PatientRow>): PatientRow {
-  const exige_nf = Boolean(data.exige_nf);
-  const etapas = { ...emptySteps(), ...(data.etapas ?? {}) } as PatientSteps;
-  return {
-    id: String(data.id || crypto.randomUUID()),
-    nome_completo: String(data.nome_completo || ""),
-    celular: formatCellphone(String(data.celular || "")),
-    cpf: formatCPF(String(data.cpf || "")),
-    exige_nf,
-    etapas,
-    etapa_atual: (data.etapa_atual as StepKey | null) ?? deriveCurrentStep(etapas, exige_nf),
-    observacoes: data.observacoes ?? "",
-    created_at: data.created_at ?? null,
-  };
-}
-
-function makeEmptyPatient(): PatientRow {
-  const etapas = emptySteps();
+function emptyPatient(): Patient {
   return {
     id: "",
     nome_completo: "",
     celular: "",
     cpf: "",
     exige_nf: false,
-    etapas,
-    etapa_atual: deriveCurrentStep(etapas, false),
     observacoes: "",
-    created_at: null,
+    etapa_atual: null,
+    etapas: normalizeSteps({ agendamento: true }),
   };
-}
-
-async function parseError(response: Response) {
-  try {
-    const data = (await response.json()) as { error?: string };
-    return data.error || "Erro inesperado.";
-  } catch {
-    return "Erro inesperado.";
-  }
-}
-
-function Message({ type, text }: { type: "ok" | "err"; text: string }) {
-  const style =
-    type === "ok"
-      ? { background: T.okBg, borderColor: T.okBd, color: T.okTx }
-      : { background: T.errBg, borderColor: T.errBd, color: T.errTx };
-
-  return (
-    <div className="rounded-2xl border px-3.5 py-2.5 text-sm font-medium" style={style}>
-      {text}
-    </div>
-  );
-}
-
-function Button({
-  children,
-  tone = "secondary",
-  loading,
-  className,
-  ...props
-}: React.ButtonHTMLAttributes<HTMLButtonElement> & {
-  tone?: "primary" | "secondary" | "ghost";
-  loading?: boolean;
-}) {
-  const style =
-    tone === "primary"
-      ? { background: `linear-gradient(135deg, ${T.accent}, ${T.accent2})`, borderColor: T.accent2, color: "#fff" }
-      : tone === "ghost"
-      ? { background: "transparent", borderColor: "transparent", color: T.text2 }
-      : { background: T.surface, borderColor: T.lineStrong, color: T.text };
-
-  return (
-    <button
-      {...props}
-      className={cx(
-        "inline-flex h-11 items-center justify-center gap-2 rounded-2xl border px-4 text-sm font-semibold transition active:translate-y-[0.5px] disabled:cursor-not-allowed disabled:opacity-60",
-        className,
-      )}
-      style={style}
-      disabled={props.disabled || loading}
-    >
-      {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-      {children}
-    </button>
-  );
-}
-
-function Badge({
-  children,
-  tone = "default",
-}: {
-  children: React.ReactNode;
-  tone?: "default" | "accent" | "ok" | "warn";
-}) {
-  const style =
-    tone === "accent"
-      ? { background: T.accentSoft, borderColor: T.accentSoft2, color: T.accent }
-      : tone === "ok"
-      ? { background: T.okBg, borderColor: T.okBd, color: T.okTx }
-      : tone === "warn"
-      ? { background: T.warnBg, borderColor: T.warnBd, color: T.warnTx }
-      : { background: T.surface3, borderColor: T.line, color: T.text2 };
-
-  return (
-    <span className="inline-flex items-center gap-1 rounded-xl border px-2.5 py-1 text-[11px] font-semibold" style={style}>
-      {children}
-    </span>
-  );
-}
-
-function Metric({ label, value, hint }: { label: string; value: string; hint: string }) {
-  return (
-    <div className="rounded-2xl border p-4" style={{ borderColor: T.line, background: T.surface2 }}>
-      <div className="text-[11px] font-semibold uppercase tracking-[0.12em]" style={{ color: T.text3 }}>
-        {label}
-      </div>
-      <div className="mt-2 text-2xl font-semibold tracking-tight" style={{ color: T.text }}>
-        {value}
-      </div>
-      <div className="mt-1 text-xs" style={{ color: T.text3 }}>
-        {hint}
-      </div>
-    </div>
-  );
-}
-
-function DataField({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
-  return (
-    <div className="rounded-2xl border p-4" style={{ borderColor: T.line, background: T.surface2 }}>
-      <div className={UI.label} style={{ color: T.text3 }}>
-        {label}
-      </div>
-      <div className={cx("mt-2 text-sm font-medium", mono && "font-mono text-[13px]")} style={{ color: T.text }}>
-        {value}
-      </div>
-    </div>
-  );
-}
-
-function ProgressBar({ value }: { value: number }) {
-  return (
-    <div className="h-2.5 w-full overflow-hidden rounded-full" style={{ background: "rgba(15,23,42,0.08)" }}>
-      <div
-        className="h-full rounded-full transition-all"
-        style={{
-          width: `${Math.max(0, Math.min(100, value))}%`,
-          background: `linear-gradient(90deg, ${T.accent}, ${T.accent2})`,
-        }}
-      />
-    </div>
-  );
-}
-
-function StepPill({ done, label }: { done: boolean; label: string }) {
-  return (
-    <div
-      className="flex items-center gap-3 rounded-2xl border px-3 py-3"
-      style={{
-        borderColor: done ? T.accentSoft3 : T.line,
-        background: done ? T.accentSoft : T.surface2,
-      }}
-    >
-      <div
-        className="grid h-8 w-8 place-items-center rounded-xl border"
-        style={{
-          borderColor: done ? T.accentSoft3 : T.line,
-          background: done ? `linear-gradient(135deg, ${T.accent}, ${T.accent2})` : T.surface,
-          color: done ? "#fff" : T.text3,
-        }}
-      >
-        <CheckCircle2 className="h-4 w-4" />
-      </div>
-      <div className="min-w-0 flex-1">
-        <div className="text-sm font-medium" style={{ color: T.text }}>
-          {label}
-        </div>
-      </div>
-      <Badge tone={done ? "ok" : "default"}>{done ? "Concluída" : "Pendente"}</Badge>
-    </div>
-  );
-}
-
-function DetailTabButton({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="inline-flex h-11 items-center justify-center rounded-2xl border px-4 text-sm font-semibold transition"
-      style={{
-        borderColor: active ? T.accentSoft3 : T.line,
-        background: active ? T.accentSoft : T.surface,
-        color: active ? T.accent : T.text2,
-      }}
-    >
-      {children}
-    </button>
-  );
-}
-
-function EditorSection({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) {
-  return (
-    <section className="rounded-[24px] border p-5" style={{ borderColor: T.line, background: T.surface2 }}>
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <div className="text-sm font-semibold" style={{ color: T.text }}>
-            {title}
-          </div>
-          {hint ? (
-            <div className="mt-1 text-xs leading-5" style={{ color: T.text3 }}>
-              {hint}
-            </div>
-          ) : null}
-        </div>
-      </div>
-      <div className="mt-4">{children}</div>
-    </section>
-  );
-}
-
-export function PacientesWorkspacePage() {
-  return <PacientesWorkspace />;
 }
 
 export function BasePacientesPage() {
-  return <PacientesWorkspace />;
-}
-
-function PacientesWorkspace() {
-  const [rows, setRows] = useState<PatientRow[]>([]);
+  const [rows, setRows] = useState<Patient[]>([]);
   const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [query, setQuery] = useState("");
-  const [stageFilter, setStageFilter] = useState<string>("");
-  const [nfFilter, setNfFilter] = useState<string>("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [tab, setTab] = useState<TabKey>("resumo");
-  const [editor, setEditor] = useState<EditorState | null>(null);
-  const [editorMode, setEditorMode] = useState<"create" | "edit">("edit");
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [editing, setEditing] = useState<Patient>(emptyPatient());
   const [msg, setMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
+  const [query, setQuery] = useState("");
+  const [stageFilter, setStageFilter] = useState("todos");
 
-  const loadRows = useCallback(async (silent?: boolean) => {
-    if (silent) setRefreshing(true);
-    else setLoading(true);
+  async function loadPatients() {
+    setLoading(true);
     try {
-      const res = await fetch("/api/pacientes", { method: "GET", cache: "no-store" });
-      if (!res.ok) throw new Error(await parseError(res));
-      const data = (await res.json()) as ApiListResponse;
-      const items = (data.items ?? []).map(makePatient);
+      const res = await fetch("/api/pacientes", { cache: "no-store" });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || "Erro ao carregar pacientes.");
+
+      const items = Array.isArray(data?.items)
+        ? data.items.map((row: any) => ({
+            ...row,
+            etapas: normalizeSteps(row.etapas),
+          }))
+        : [];
+
       setRows(items);
-      setSelectedId((prev) => prev && items.some((item) => item.id === prev) ? prev : items[0]?.id ?? null);
+      if (items.length && !selectedId) setSelectedId(items[0].id);
     } catch (e: any) {
-      setMsg({ type: "err", text: e?.message || "Não foi possível carregar os pacientes." });
+      setMsg({ type: "err", text: e?.message || "Erro ao carregar pacientes." });
     } finally {
       setLoading(false);
-      setRefreshing(false);
     }
+  }
+
+  useEffect(() => {
+    loadPatients();
   }, []);
 
-  useEffect(() => {
-    loadRows();
-  }, [loadRows]);
-
   const filteredRows = useMemo(() => {
-    const q = query.trim().toLowerCase();
     return rows.filter((row) => {
-      const matchesQuery =
-        !q ||
-        row.nome_completo.toLowerCase().includes(q) ||
-        digitsOnly(row.cpf).includes(digitsOnly(q)) ||
-        digitsOnly(row.celular).includes(digitsOnly(q));
+      const matchesQuery = !query
+        ? true
+        : [row.nome_completo, row.cpf, row.celular]
+            .filter(Boolean)
+            .some((value) => String(value).toLowerCase().includes(query.toLowerCase()));
 
-      const matchesStage = !stageFilter || row.etapa_atual === stageFilter;
-      const matchesNF = !nfFilter || (nfFilter === "com_nf" ? row.exige_nf : !row.exige_nf);
+      const rowCurrentStep = getCurrentStep(row.etapas, row.exige_nf);
+      const matchesStage = stageFilter === "todos" ? true : rowCurrentStep === stageFilter;
 
-      return matchesQuery && matchesStage && matchesNF;
+      return matchesQuery && matchesStage;
     });
-  }, [rows, query, stageFilter, nfFilter]);
+  }, [rows, query, stageFilter]);
 
-  const selectedRow = useMemo(() => filteredRows.find((row) => row.id === selectedId) ?? rows.find((row) => row.id === selectedId) ?? filteredRows[0] ?? rows[0] ?? null, [filteredRows, rows, selectedId]);
+  const selectedPatient = useMemo(() => {
+    return rows.find((row) => row.id === selectedId) || null;
+  }, [rows, selectedId]);
 
   useEffect(() => {
-    if (!selectedRow) {
-      setEditor(null);
-      return;
-    }
-    if (editorMode === "edit" && (!editor || editor.id !== selectedRow.id)) {
-      setEditor({ ...selectedRow, etapas: { ...selectedRow.etapas } });
-    }
-  }, [selectedRow, editor, editorMode]);
+    if (!selectedPatient) return;
+    setEditing({
+      ...selectedPatient,
+      celular: maskPhone(selectedPatient.celular),
+      cpf: maskCPF(selectedPatient.cpf),
+      observacoes: selectedPatient.observacoes || "",
+      etapas: normalizeSteps(selectedPatient.etapas),
+    });
+  }, [selectedPatient]);
+
+  const currentStepLabel = useMemo(() => getCurrentStepLabel(editing), [editing]);
+  const nextStepLabel = useMemo(() => getNextStepLabel(editing), [editing]);
+  const progress = useMemo(() => progressPercent(editing.etapas, editing.exige_nf), [editing]);
 
   const total = rows.length;
-  const comNF = rows.filter((row) => row.exige_nf).length;
-  const concluidos = rows.filter((row) => countCompletedSteps(row.etapas, row.exige_nf) === totalRelevantSteps(row.exige_nf)).length;
-  const andamento = total - concluidos;
+  const withNF = rows.filter((r) => r.exige_nf).length;
+  const completed = rows.filter((r) => {
+    const relevant = PATIENT_STEPS.filter((step) => !step.optional || r.exige_nf);
+    return relevant.every((step) => r.etapas[step.key]);
+  }).length;
 
-  const selectedProgress = editor
-    ? Math.round((countCompletedSteps(editor.etapas, editor.exige_nf) / Math.max(1, totalRelevantSteps(editor.exige_nf))) * 100)
-    : 0;
-
-  const startCreate = () => {
-    setEditorMode("create");
-    setSelectedId(null);
-    setTab("edicao");
-    setEditor(makeEmptyPatient());
-    setMsg(null);
-  };
-
-  const openForEdit = (row: PatientRow) => {
-    setEditorMode("edit");
+  function openRow(row: Patient) {
     setSelectedId(row.id);
-    setTab("resumo");
-    setEditor({ ...row, etapas: { ...row.etapas } });
+    setDrawerOpen(true);
     setMsg(null);
-  };
+  }
 
-  const updateEditor = <K extends keyof EditorState>(key: K, value: EditorState[K]) => {
-    setEditor((prev) => {
-      if (!prev) return prev;
-      const next = { ...prev, [key]: value } as EditorState;
-      next.etapa_atual = deriveCurrentStep(next.etapas, next.exige_nf);
-      return next;
-    });
-  };
+  function closeDrawer() {
+    setDrawerOpen(false);
+    setMsg(null);
+  }
 
-  const toggleStep = (key: StepKey) => {
-    setEditor((prev) => {
-      if (!prev) return prev;
-      const etapas = { ...prev.etapas, [key]: !prev.etapas[key] };
-      return {
-        ...prev,
-        etapas,
-        etapa_atual: deriveCurrentStep(etapas, prev.exige_nf),
-      };
-    });
-  };
+  function setField<K extends keyof Patient>(key: K, value: Patient[K]) {
+    setEditing((prev) => ({ ...prev, [key]: value }));
+  }
 
-  const saveEditor = async () => {
-    if (!editor) return;
+  function setStep(key: StepKey, checked: boolean) {
+    setEditing((prev) => ({
+      ...prev,
+      etapas: {
+        ...prev.etapas,
+        [key]: checked,
+      },
+    }));
+  }
 
-    const nome = editor.nome_completo.trim();
-    const cpf = digitsOnly(editor.cpf);
-    const celular = digitsOnly(editor.celular);
+  function validate() {
+    if (!String(editing.nome_completo || "").trim()) return "Informe o nome completo.";
+    if (digitsOnly(editing.cpf).length !== 11) return "CPF inválido. Informe 11 dígitos.";
+    if (digitsOnly(editing.celular).length < 10) return "Celular inválido.";
+    return null;
+  }
 
-    if (!nome) return setMsg({ type: "err", text: "Informe o nome completo do paciente." });
-    if (cpf.length !== 11) return setMsg({ type: "err", text: "CPF inválido. Informe 11 dígitos." });
-    if (celular.length < 10) return setMsg({ type: "err", text: "Celular inválido." });
+  async function savePatient() {
+    const err = validate();
+    if (err) return setMsg({ type: "err", text: err });
+    if (!editing.id) return setMsg({ type: "err", text: "Paciente não encontrado." });
 
     setSaving(true);
     setMsg(null);
-
-    const payload = {
-      nome_completo: nome,
-      cpf,
-      celular,
-      exige_nf: editor.exige_nf,
-      etapas: editor.etapas,
-      observacoes: editor.observacoes?.trim() || null,
-    };
-
     try {
-      if (editorMode === "create") {
-        const res = await fetch("/api/pacientes", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
-
-        if (!res.ok) throw new Error(await parseError(res));
-
-        const data = (await res.json()) as ApiItemResponse;
-        const item = makePatient(data.item ?? {});
-        setRows((prev) => [item, ...prev]);
-        setSelectedId(item.id);
-        setEditorMode("edit");
-        setEditor({ ...item, etapas: { ...item.etapas } });
-        setTab("resumo");
-        setMsg({ type: "ok", text: "Paciente cadastrado com sucesso." });
-        return;
-      }
-
-      const res = await fetch(`/api/pacientes/${editor.id}`, {
+      const res = await fetch(`/api/pacientes/${editing.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({
+          nome_completo: String(editing.nome_completo || "").trim(),
+          celular: digitsOnly(editing.celular),
+          cpf: digitsOnly(editing.cpf),
+          exige_nf: editing.exige_nf,
+          observacoes: String(editing.observacoes || "").trim() || null,
+          etapas: editing.etapas,
+        }),
       });
 
-      if (!res.ok) throw new Error(await parseError(res));
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || "Erro ao atualizar paciente.");
 
-      const data = (await res.json()) as ApiItemResponse;
-      const item = makePatient(data.item ?? {});
-      setRows((prev) => prev.map((row) => (row.id === item.id ? item : row)));
-      setSelectedId(item.id);
-      setEditor({ ...item, etapas: { ...item.etapas } });
+      const updated = {
+        ...data.item,
+        etapas: normalizeSteps(data.item?.etapas),
+      } as Patient;
+
+      setRows((prev) => prev.map((row) => (row.id === updated.id ? updated : row)));
+      setSelectedId(updated.id);
+      setEditing({
+        ...updated,
+        celular: maskPhone(updated.celular),
+        cpf: maskCPF(updated.cpf),
+        observacoes: updated.observacoes || "",
+      });
       setMsg({ type: "ok", text: "Paciente atualizado com sucesso." });
-      setTab("resumo");
     } catch (e: any) {
-      setMsg({ type: "err", text: e?.message || "Não foi possível salvar." });
+      setMsg({ type: "err", text: e?.message || "Erro ao atualizar paciente." });
     } finally {
       setSaving(false);
     }
-  };
-
-  const visibleEditor = editorMode === "edit" ? editor ?? selectedRow : editor;
+  }
 
   return (
-    <main className={UI.page} style={{ background: T.bg }}>
-      <div className={UI.shell}>
-        <section className={cx(UI.panel, "overflow-hidden")} style={{ borderColor: T.line, boxShadow: T.shadow, background: T.surface }}>
-          <div className="border-b px-5 py-5 sm:px-6" style={{ borderColor: T.line, background: T.surface }}>
-            <div className="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
-              <div className="min-w-0">
-                <div className="flex items-center gap-2">
-                  <div className="grid h-11 w-11 place-items-center rounded-2xl border" style={{ borderColor: T.accentSoft3, background: T.accentSoft, color: T.accent }}>
-                    <ClipboardList className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <h1 className="text-[22px] font-semibold tracking-tight" style={{ color: T.text }}>
-                      Base de pacientes
-                    </h1>
-                    <p className="mt-1 text-sm" style={{ color: T.text3 }}>
-                      Lista operacional com ficha lateral do paciente e edição completa do cadastro.
-                    </p>
-                  </div>
+    <section className={UI.page} style={{ background: T.bg, color: T.text }}>
+      <div className={UI.container}>
+        <div className={cx(UI.header, "p-4 sm:p-5 rounded-lg")} style={{ borderColor: T.border, background: T.card }}>
+          <div className="flex items-start justify-between gap-4 flex-wrap">
+            <div className="min-w-0">
+              <div className={UI.headerTitle} style={{ color: T.text }}>
+                Base de pacientes
+              </div>
+              {/* <div className={cx(UI.headerSub, "mt-1 max-w-3xl")} style={{ color: T.text3 }}>
+                Consulte a base operacional de pacientes, selecione um registro na lista e abra o painel lateral para atualizar dados cadastrais, observações e andamento do fluxo.
+              </div> */}
+
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <Pill active>Total: {total}</Pill>
+                <Pill>Concluídos: {completed}</Pill>
+                <Pill>Com NF: {withNF}</Pill>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Pill>{loading ? "Atualizando base…" : `${filteredRows.length} registro(s)`}</Pill>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-4 grid grid-cols-1 gap-4">
+          <div className={cx(UI.section, "p-4 rounded-lg")} style={{ borderColor: T.border, background: T.card }}>
+            <div className="flex items-start justify-between gap-4 flex-wrap">
+              <div>
+                <div className={UI.sectionTitle} style={{ color: T.text }}>
+                  Lista de pacientes
+                </div>
+                {/* <div className={cx(UI.sectionHint, "mt-1")} style={{ color: T.text3 }}>
+                  Clique em qualquer linha para abrir o drawer lateral com os dados editáveis.
+                </div> */}
+              </div>
+            </div>
+
+            <div className="mt-4 grid grid-cols-1 md:grid-cols-12 gap-3">
+              <div className="md:col-span-7 lg:col-span-8">
+                <label className={UI.label} style={{ color: T.text2 }}>
+                  Buscar por nome, CPF ou celular
+                </label>
+                <div className="relative mt-1">
+                  <input
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    className={cx(UI.input, "pl-10")}
+                    style={{ borderColor: T.border }}
+                    placeholder="Pesquisar paciente"
+                  />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: T.text3 }} />
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 xl:w-[560px]">
-                <Metric label="Pacientes" value={String(total)} hint="Base cadastrada" />
-                <Metric label="Em andamento" value={String(andamento)} hint="Fluxo ativo" />
-                <Metric label="Concluídos" value={String(concluidos)} hint="Fluxo finalizado" />
-                <Metric label="Com NF" value={String(comNF)} hint="Exigência fiscal" />
+              <div className="md:col-span-5 lg:col-span-4">
+                <label className={UI.label} style={{ color: T.text2 }}>
+                  Etapa atual
+                </label>
+                <div className="py-1">
+                <select
+                  value={stageFilter}
+                  onChange={(e) => setStageFilter(e.target.value)}
+                  className={UI.select}
+                  style={{ borderColor: T.border }}
+                >
+                  <option value="todos">Todas as etapas</option>
+                  {PATIENT_STEPS.map((step) => (
+                    <option key={step.key} value={step.key}>
+                      {step.label}
+                    </option>
+                  ))}
+                </select>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-4 overflow-hidden rounded-lg border" style={{ borderColor: T.border }}>
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[980px] border-separate border-spacing-0">
+                  <thead>
+                    <tr style={{ background: T.cardSoft }}>
+                      {[
+                        "Paciente",
+                        "Celular",
+                        "CPF",
+                        "Etapa atual",
+                        "Próxima etapa",
+                        "Progresso",
+                        "Cadastro",
+                      ].map((h) => (
+                        <th
+                          key={h}
+                          className="text-left text-[11px] font-semibold uppercase tracking-[0.04em] px-4 py-3 border-b"
+                          style={{ color: T.text3, borderColor: T.border }}
+                        >
+                          {h}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {loading ? (
+                      <tr>
+                        <td colSpan={7} className="px-4 py-10 text-center text-sm" style={{ color: T.text3 }}>
+                          <span className="inline-flex items-center gap-2">
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            Carregando pacientes…
+                          </span>
+                        </td>
+                      </tr>
+                    ) : filteredRows.length === 0 ? (
+                      <tr>
+                        <td colSpan={7} className="px-4 py-10 text-center text-sm" style={{ color: T.text3 }}>
+                          Nenhum paciente encontrado para os filtros aplicados.
+                        </td>
+                      </tr>
+                    ) : (
+                      filteredRows.map((row) => {
+                        const selected = row.id === selectedId;
+                        const stepLabel = getCurrentStepLabel(row);
+                        const nextLabel = getNextStepLabel(row);
+                        const progress = progressPercent(row.etapas, row.exige_nf);
+                        return (
+                          <tr
+                            key={row.id}
+                            onClick={() => openRow(row)}
+                            className="cursor-pointer transition-colors"
+                            style={{ background: selected ? T.accentSoft : T.card }}
+                          >
+                            <td className="px-4 py-3 border-b align-middle" style={{ borderColor: T.border }}>
+                              <div className="flex items-start gap-3">
+                                <div
+                                  className="w-9 h-9 rounded-md border flex items-center justify-center shrink-0"
+                                  style={{ borderColor: selected ? "rgba(17, 89, 35, 0.24)" : T.border, background: T.cardSoft }}
+                                >
+                                  <UserRound className="w-4 h-4" style={{ color: selected ? T.accent : T.text3 }} />
+                                </div>
+                                <div className="min-w-0">
+                                  <div className="text-sm font-medium truncate" style={{ color: T.text }}>
+                                    {row.nome_completo}
+                                  </div>
+                                  <div className="mt-1 text-xs" style={{ color: T.text3 }}>
+                                    {row.exige_nf ? "NF aplicável" : "Sem NF"}
+                                  </div>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-4 py-3 border-b text-sm" style={{ borderColor: T.border, color: T.text2 }}>
+                              {maskPhone(row.celular)}
+                            </td>
+                            <td className="px-4 py-3 border-b text-sm" style={{ borderColor: T.border, color: T.text2 }}>
+                              {maskCPF(row.cpf)}
+                            </td>
+                            <td className="px-4 py-3 border-b" style={{ borderColor: T.border }}>
+                              <Pill active={selected}>{stepLabel}</Pill>
+                            </td>
+                            <td className="px-4 py-3 border-b text-sm" style={{ borderColor: T.border, color: T.text2 }}>
+                              {nextLabel}
+                            </td>
+                            <td className="px-4 py-3 border-b" style={{ borderColor: T.border }}>
+                              <div className="min-w-[140px]">
+                                <div className="h-2 rounded-full overflow-hidden" style={{ background: "rgba(17,24,39,0.08)" }}>
+                                  <div
+                                    className="h-full rounded-full transition-all"
+                                    style={{ width: `${progress}%`, background: T.accent2 }}
+                                  />
+                                </div>
+                                <div className="mt-1 text-xs" style={{ color: T.text3 }}>
+                                  {progress}%
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-4 py-3 border-b text-sm" style={{ borderColor: T.border, color: T.text2 }}>
+                              {formatDate(row.created_at)}
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
               </div>
             </div>
           </div>
+        </div>
+      </div>
 
-          <div className="grid min-h-[780px] grid-cols-1 xl:grid-cols-[420px_minmax(0,1fr)]">
-            <aside className="border-r" style={{ borderColor: T.line, background: T.surface2 }}>
-              <div className="border-b p-5" style={{ borderColor: T.line }}>
-                <div className="flex flex-col gap-3">
-                  <div className="relative">
-                    <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" style={{ color: T.text3 }} />
-                    <input
-                      value={query}
-                      onChange={(e) => setQuery(e.target.value)}
-                      className={cx(UI.input, "pl-10")}
-                      style={{ borderColor: T.lineStrong, color: T.text }}
-                      placeholder="Buscar por nome, CPF ou celular"
-                    />
-                  </div>
+      <div
+        className={cx(
+          "fixed inset-0 z-40 transition-opacity duration-200",
+          drawerOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+        )}
+        style={{ background: "rgba(11,18,32,0.32)" }}
+        onClick={closeDrawer}
+      />
 
-                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                    <select
-                      value={stageFilter}
-                      onChange={(e) => setStageFilter(e.target.value)}
-                      className={UI.select}
-                      style={{ borderColor: T.lineStrong, color: T.text }}
-                    >
-                      <option value="">Todas as etapas</option>
-                      {PATIENT_STEPS.map((step) => (
-                        <option key={step.key} value={step.key}>
-                          {step.label}
-                        </option>
-                      ))}
-                    </select>
-
-                    <select
-                      value={nfFilter}
-                      onChange={(e) => setNfFilter(e.target.value)}
-                      className={UI.select}
-                      style={{ borderColor: T.lineStrong, color: T.text }}
-                    >
-                      <option value="">NF: todos</option>
-                      <option value="com_nf">Com NF</option>
-                      <option value="sem_nf">Sem NF</option>
-                    </select>
-                  </div>
-
-                  <div className="flex items-center gap-3">
-                    <Button tone="primary" className="flex-1" onClick={startCreate}>
-                      <Plus className="h-4 w-4" />
-                      Novo paciente
-                    </Button>
-                    <Button tone="secondary" onClick={() => loadRows(true)} loading={refreshing}>
-                      <RefreshCw className="h-4 w-4" />
-                      Atualizar
-                    </Button>
-                  </div>
+      <aside
+        className={cx(
+          "fixed top-0 right-0 h-screen z-50 w-full max-w-[640px] border-l shadow-2xl transition-transform duration-300",
+          drawerOpen ? "translate-x-0" : "translate-x-full"
+        )}
+        style={{ background: T.bg, borderColor: T.borderStrong }}
+      >
+        <div className="h-full flex flex-col">
+          <div className="border-b px-5 py-4 bg-white" style={{ borderColor: T.border }}>
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0">
+                <div className="text-base font-semibold tracking-tight" style={{ color: T.text }}>
+                  Ficha do paciente
+                </div>
+                <div className="mt-1 text-xs" style={{ color: T.text3 }}>
+                  Atualize dados cadastrais, observações e andamento do fluxo de atendimento.
+                </div>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <Pill active>{currentStepLabel}</Pill>
+                  <Pill>Próxima etapa: {nextStepLabel}</Pill>
+                  <Pill>Progresso: {progress}%</Pill>
                 </div>
               </div>
+              <button
+                onClick={closeDrawer}
+                className="inline-flex items-center justify-center w-10 h-10 border rounded-md transition"
+                style={{ borderColor: T.border, background: T.card }}
+                aria-label="Fechar painel"
+              >
+                <X className="w-4 h-4" style={{ color: T.text2 }} />
+              </button>
+            </div>
+          </div>
 
-              <div className="flex items-center justify-between px-5 py-3 border-b" style={{ borderColor: T.line }}>
-                <div>
-                  <div className="text-sm font-semibold" style={{ color: T.text }}>
-                    Lista de pacientes
+          <div className="flex-1 overflow-y-auto px-5 py-5">
+            {!selectedPatient ? (
+              <div className="h-full flex items-center justify-center text-sm" style={{ color: T.text3 }}>
+                Selecione um paciente na lista.
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className={cx(UI.section, "p-4 rounded-lg")} style={{ borderColor: T.border, background: T.card }}>
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <div className={UI.sectionTitle} style={{ color: T.text }}>
+                        Resumo do registro
+                      </div>
+                      <div className={cx(UI.sectionHint, "mt-1")} style={{ color: T.text3 }}>
+                        Consulte rapidamente o paciente selecionado.
+                      </div>
+                    </div>
+                    <ChevronRight className="w-4 h-4" style={{ color: T.text3 }} />
                   </div>
-                  <div className="text-xs" style={{ color: T.text3 }}>
-                    {filteredRows.length} registros visíveis
+
+                  <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="p-3 border rounded-md" style={{ borderColor: T.border, background: T.cardSoft }}>
+                      <div className="text-[11px] font-medium" style={{ color: T.text3 }}>
+                        Etapa atual
+                      </div>
+                      <div className="mt-1 text-sm font-semibold" style={{ color: T.accent }}>
+                        {currentStepLabel}
+                      </div>
+                    </div>
+                    <div className="p-3 border rounded-md" style={{ borderColor: T.border, background: T.cardSoft }}>
+                      <div className="text-[11px] font-medium" style={{ color: T.text3 }}>
+                        Próxima etapa
+                      </div>
+                      <div className="mt-1 text-sm font-semibold" style={{ color: T.text }}>
+                        {nextStepLabel}
+                      </div>
+                    </div>
+                    <div className="p-3 border rounded-md sm:col-span-2" style={{ borderColor: T.border, background: T.cardSoft }}>
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="text-[11px] font-medium" style={{ color: T.text3 }}>
+                          Progresso do fluxo
+                        </div>
+                        <div className="text-xs font-medium" style={{ color: T.text2 }}>
+                          {progress}%
+                        </div>
+                      </div>
+                      <div className="mt-2 h-2 rounded-full overflow-hidden" style={{ background: "rgba(17,24,39,0.08)" }}>
+                        <div
+                          className="h-full rounded-full transition-all"
+                          style={{ width: `${progress}%`, background: T.accent2 }}
+                        />
+                      </div>
+                    </div>
                   </div>
                 </div>
-                <Badge>{loading ? "Carregando" : `${rows.length} total`}</Badge>
-              </div>
 
-              <div className="max-h-[calc(100vh-250px)] overflow-y-auto p-3 sm:p-4">
-                {loading ? (
-                  <div className="grid place-items-center rounded-[24px] border p-10 text-sm" style={{ borderColor: T.line, background: T.surface }}>
-                    <div className="flex items-center gap-2" style={{ color: T.text3 }}>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Carregando pacientes…
+                <div className={cx(UI.section, "p-4 rounded-lg")} style={{ borderColor: T.border, background: T.card }}>
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <div className={UI.sectionTitle} style={{ color: T.text }}>
+                        Dados do paciente
+                      </div>
+                      <div className={cx(UI.sectionHint, "mt-1")} style={{ color: T.text3 }}>
+                        Campos editáveis para atualização cadastral.
+                      </div>
+                    </div>
+                    <FileText className="w-4 h-4" style={{ color: T.text3 }} />
+                  </div>
+
+                  <div className="mt-4 grid gap-4">
+                    <div>
+                      <label className={UI.label} style={{ color: T.text2 }}>
+                        Nome completo
+                      </label>
+                      <div className="relative mt-1">
+                        <input
+                          value={editing.nome_completo}
+                          onChange={(e) => setField("nome_completo", e.target.value)}
+                          className={cx(UI.input, "pl-10")}
+                          style={{ borderColor: T.border }}
+                          placeholder="Digite o nome completo"
+                        />
+                        <UserRound className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: T.text3 }} />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className={UI.label} style={{ color: T.text2 }}>
+                          Número de celular
+                        </label>
+                        <div className="relative mt-1">
+                          <input
+                            value={editing.celular}
+                            onChange={(e) => setField("celular", maskPhone(e.target.value))}
+                            className={cx(UI.input, "pl-10")}
+                            style={{ borderColor: T.border }}
+                            placeholder="(11) 99999-9999"
+                            inputMode="tel"
+                          />
+                          <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: T.text3 }} />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className={UI.label} style={{ color: T.text2 }}>
+                          CPF
+                        </label>
+                        <div className="relative mt-1">
+                          <input
+                            value={editing.cpf}
+                            onChange={(e) => setField("cpf", maskCPF(e.target.value))}
+                            className={cx(UI.input, "pl-10")}
+                            style={{ borderColor: T.border }}
+                            placeholder="000.000.000-00"
+                            inputMode="numeric"
+                          />
+                          <IdCard className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: T.text3 }} />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="p-3 border rounded-md" style={{ borderColor: T.border, background: T.mutedBg }}>
+                      <label className="flex items-start gap-3 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={editing.exige_nf}
+                          onChange={(e) => setField("exige_nf", e.target.checked)}
+                          className="mt-0.5"
+                        />
+                        <div>
+                          <div className="text-[11px] font-medium" style={{ color: T.text2 }}>
+                            Exigir entrega de NF
+                          </div>
+                          <div className="mt-1 text-xs" style={{ color: T.text3 }}>
+                            Ative esta opção quando a etapa de nota fiscal for aplicável ao paciente.
+                          </div>
+                        </div>
+                      </label>
                     </div>
                   </div>
-                ) : filteredRows.length === 0 ? (
-                  <div className="rounded-[24px] border p-8" style={{ borderColor: T.line, background: T.surface }}>
-                    <div className="text-sm font-semibold" style={{ color: T.text }}>
-                      Nenhum paciente encontrado
-                    </div>
-                    <div className="mt-2 text-sm leading-6" style={{ color: T.text3 }}>
-                      Ajuste os filtros ou cadastre um novo paciente para iniciar a base.
-                    </div>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {filteredRows.map((row) => {
-                      const done = countCompletedSteps(row.etapas, row.exige_nf);
-                      const totalSteps = totalRelevantSteps(row.exige_nf);
-                      const progress = Math.round((done / totalSteps) * 100);
-                      const active = row.id === selectedRow?.id && editorMode !== "create";
+                </div>
 
+                <div className={cx(UI.section, "p-4 rounded-lg")} style={{ borderColor: T.border, background: T.card }}>
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <div className={UI.sectionTitle} style={{ color: T.text }}>
+                        Etapas do fluxo
+                      </div>
+                      <div className={cx(UI.sectionHint, "mt-1")} style={{ color: T.text3 }}>
+                        Atualize manualmente as etapas concluídas do atendimento.
+                      </div>
+                    </div>
+                    <ClipboardList className="w-4 h-4" style={{ color: T.text3 }} />
+                  </div>
+
+                  <div className="mt-4 grid gap-3">
+                    {PATIENT_STEPS.map((step) => {
+                      const disabled = step.optional && !editing.exige_nf;
                       return (
-                        <button
-                          key={row.id}
-                          type="button"
-                          onClick={() => openForEdit(row)}
-                          className="w-full rounded-[24px] border p-4 text-left transition"
+                        <label
+                          key={step.key}
+                          className="flex items-start gap-3 p-3 border rounded-md"
                           style={{
-                            borderColor: active ? T.accentSoft3 : T.line,
-                            background: active ? T.accentSoft : T.surface,
-                            boxShadow: active ? "inset 3px 0 0 #14532D" : "none",
+                            borderColor: T.border,
+                            background: disabled
+                              ? "rgba(17,24,39,0.03)"
+                              : editing.etapas[step.key]
+                              ? T.accentSoft
+                              : T.cardSoft,
+                            opacity: disabled ? 0.6 : 1,
                           }}
                         >
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="min-w-0 flex-1">
-                              <div className="truncate text-sm font-semibold" style={{ color: T.text }}>
-                                {row.nome_completo || "Paciente sem nome"}
-                              </div>
-                              <div className="mt-1 text-xs" style={{ color: T.text3 }}>
-                                {row.cpf || "CPF não informado"}
-                              </div>
+                          <input
+                            type="checkbox"
+                            checked={disabled ? false : editing.etapas[step.key]}
+                            disabled={disabled}
+                            onChange={(e) => setStep(step.key, e.target.checked)}
+                            className="mt-0.5"
+                          />
+                          <div className="min-w-0">
+                            <div className="text-sm font-medium" style={{ color: T.text }}>
+                              {step.label}
                             </div>
-                            <Badge tone={row.exige_nf ? "warn" : "default"}>{row.exige_nf ? "NF" : "Sem NF"}</Badge>
-                          </div>
-
-                          <div className="mt-4 grid gap-3">
-                            <div>
-                              <div className="flex items-center justify-between text-[11px] font-semibold uppercase tracking-[0.12em]" style={{ color: T.text3 }}>
-                                <span>Progresso</span>
-                                <span>{progress}%</span>
-                              </div>
-                              <div className="mt-2">
-                                <ProgressBar value={progress} />
-                              </div>
-                            </div>
-
-                            <div className="flex items-center justify-between gap-3 text-xs">
-                              <span style={{ color: T.text2 }}>
-                                {row.etapa_atual ? STEP_LABEL_BY_KEY[row.etapa_atual] : "Sem andamento"}
-                              </span>
-                              <span style={{ color: T.text3 }}>
-                                {done}/{totalSteps}
-                              </span>
-                            </div>
-
-                            <div className="text-xs" style={{ color: T.text3 }}>
-                              {row.celular || "Sem celular"}
+                            <div className="mt-1 text-xs" style={{ color: T.text3 }}>
+                              {step.optional
+                                ? "Etapa opcional. Só entra no fluxo quando houver necessidade de NF."
+                                : "Etapa padrão do fluxo do paciente."}
                             </div>
                           </div>
-                        </button>
+                        </label>
                       );
                     })}
                   </div>
-                )}
-              </div>
-            </aside>
-
-            <section className="min-w-0" style={{ background: T.surface }}>
-              <div className="border-b px-5 py-4 sm:px-6" style={{ borderColor: T.line }}>
-                <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-3">
-                      <div className="grid h-12 w-12 place-items-center rounded-2xl border" style={{ borderColor: T.line, background: T.surface2, color: T.accent }}>
-                        <UserRound className="h-5 w-5" />
-                      </div>
-                      <div className="min-w-0">
-                        <div className="truncate text-lg font-semibold tracking-tight" style={{ color: T.text }}>
-                          {visibleEditor?.nome_completo || "Novo paciente"}
-                        </div>
-                        <div className="mt-1 flex flex-wrap items-center gap-2 text-xs" style={{ color: T.text3 }}>
-                          <span>{visibleEditor?.cpf || "CPF pendente"}</span>
-                          <span>•</span>
-                          <span>{visibleEditor?.celular || "Celular pendente"}</span>
-                          <span>•</span>
-                          <span>{visibleEditor?.created_at ? formatDateTime(visibleEditor.created_at) : "Ainda não cadastrado"}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-wrap items-center gap-2">
-                    <DetailTabButton active={tab === "resumo"} onClick={() => setTab("resumo")}>Resumo</DetailTabButton>
-                    <DetailTabButton active={tab === "etapas"} onClick={() => setTab("etapas")}>Etapas</DetailTabButton>
-                    <DetailTabButton active={tab === "edicao"} onClick={() => setTab("edicao")}>Edição</DetailTabButton>
-                  </div>
                 </div>
-              </div>
 
-              <div className="p-5 sm:p-6">
-                {msg ? <div className="mb-5"><Message type={msg.type} text={msg.text} /></div> : null}
-
-                {!visibleEditor ? (
-                  <div className="grid min-h-[420px] place-items-center rounded-[28px] border" style={{ borderColor: T.line, background: T.surface2 }}>
-                    <div className="text-center">
-                      <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl border" style={{ borderColor: T.line, background: T.surface, color: T.text3 }}>
-                        <ClipboardList className="h-6 w-6" />
-                      </div>
-                      <div className="mt-4 text-lg font-semibold" style={{ color: T.text }}>
-                        Selecione um paciente
-                      </div>
-                      <div className="mt-2 text-sm" style={{ color: T.text3 }}>
-                        Clique em um registro à esquerda para abrir a ficha lateral com resumo, etapas e edição.
-                      </div>
-                    </div>
+                <div className={cx(UI.section, "p-4 rounded-lg")} style={{ borderColor: T.border, background: T.card }}>
+                  <div className={UI.sectionTitle} style={{ color: T.text }}>
+                    Observações
                   </div>
-                ) : (
-                  <div className="space-y-5">
-                    <div className="grid grid-cols-1 gap-5 2xl:grid-cols-[1.25fr_0.95fr]">
-                      <section className="rounded-[28px] border p-5" style={{ borderColor: T.line, background: T.surface2 }}>
-                        <div className="flex items-start justify-between gap-4">
-                          <div>
-                            <div className="text-sm font-semibold" style={{ color: T.text }}>
-                              Status do atendimento
-                            </div>
-                            <div className="mt-1 text-xs" style={{ color: T.text3 }}>
-                              Progresso geral do fluxo, próxima etapa e situação documental.
-                            </div>
-                          </div>
-                          <div className="flex flex-wrap items-center gap-2">
-                            <Badge tone={visibleEditor.exige_nf ? "warn" : "default"}>
-                              {visibleEditor.exige_nf ? "NF obrigatória" : "NF opcional"}
-                            </Badge>
-                            <Badge tone={selectedProgress === 100 ? "ok" : "accent"}>{selectedProgress}% concluído</Badge>
-                          </div>
-                        </div>
-
-                        <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-3">
-                          <DataField label="Etapa atual" value={visibleEditor.etapa_atual ? STEP_LABEL_BY_KEY[visibleEditor.etapa_atual] : "Sem andamento"} />
-                          <DataField label="Próxima etapa" value={nextPendingStep(visibleEditor) ? nextPendingStep(visibleEditor)!.label : "Fluxo concluído"} />
-                          <DataField label="Cadastro" value={formatDateTime(visibleEditor.created_at)} />
-                        </div>
-
-                        <div className="mt-5">
-                          <div className="mb-2 flex items-center justify-between text-[11px] font-semibold uppercase tracking-[0.12em]" style={{ color: T.text3 }}>
-                            <span>Progresso do fluxo</span>
-                            <span>
-                              {countCompletedSteps(visibleEditor.etapas, visibleEditor.exige_nf)}/{totalRelevantSteps(visibleEditor.exige_nf)} etapas
-                            </span>
-                          </div>
-                          <ProgressBar value={selectedProgress} />
-                        </div>
-                      </section>
-
-                      <section className="rounded-[28px] border p-5" style={{ borderColor: T.line, background: T.surface2 }}>
-                        <div className="text-sm font-semibold" style={{ color: T.text }}>
-                          Dados do paciente
-                        </div>
-                        <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
-                          <DataField label="Nome completo" value={visibleEditor.nome_completo || "—"} />
-                          <DataField label="CPF" value={visibleEditor.cpf || "—"} mono />
-                          <DataField label="Celular" value={visibleEditor.celular || "—"} mono />
-                          <DataField label="Identificador" value={visibleEditor.id || "Novo registro"} mono />
-                        </div>
-                      </section>
-                    </div>
-
-                    {tab === "resumo" ? (
-                      <section className="grid grid-cols-1 gap-5 xl:grid-cols-[1.15fr_0.85fr]">
-                        <EditorSection
-                          title="Checklist executivo"
-                          hint="Leitura rápida do andamento do paciente. Para alterar as etapas, use a aba de edição ou a aba de etapas."
-                        >
-                          <div className="grid gap-3">
-                            {PATIENT_STEPS.map((step) => {
-                              if (step.optional && !visibleEditor.exige_nf) return null;
-                              return <StepPill key={step.key} done={visibleEditor.etapas[step.key]} label={step.label} />;
-                            })}
-                          </div>
-                        </EditorSection>
-
-                        <EditorSection title="Observações" hint="Anotações operacionais e informações relevantes do caso.">
-                          <div className="rounded-2xl border p-4 text-sm leading-6" style={{ borderColor: T.line, background: T.surface }}>
-                            <div style={{ color: T.text2 }}>{visibleEditor.observacoes?.trim() || "Nenhuma observação cadastrada."}</div>
-                          </div>
-                        </EditorSection>
-                      </section>
-                    ) : null}
-
-                    {tab === "etapas" ? (
-                      <EditorSection title="Linha do tempo do tratamento" hint="Visualização estruturada de todas as etapas do fluxo do paciente.">
-                        <div className="grid gap-3">
-                          {PATIENT_STEPS.map((step, index) => {
-                            if (step.optional && !visibleEditor.exige_nf) return null;
-                            const done = visibleEditor.etapas[step.key];
-                            return (
-                              <div key={step.key} className="relative pl-14">
-                                {index < PATIENT_STEPS.length - 1 ? (
-                                  <div className="absolute left-[15px] top-10 h-[calc(100%-18px)] w-px" style={{ background: T.line }} />
-                                ) : null}
-                                <div
-                                  className="absolute left-0 top-0 grid h-8 w-8 place-items-center rounded-xl border"
-                                  style={{
-                                    borderColor: done ? T.accentSoft3 : T.line,
-                                    background: done ? `linear-gradient(135deg, ${T.accent}, ${T.accent2})` : T.surface,
-                                    color: done ? "#fff" : T.text3,
-                                  }}
-                                >
-                                  <CheckCircle2 className="h-4 w-4" />
-                                </div>
-                                <div className="rounded-2xl border p-4" style={{ borderColor: done ? T.accentSoft3 : T.line, background: done ? T.accentSoft : T.surface2 }}>
-                                  <div className="flex flex-wrap items-center justify-between gap-3">
-                                    <div>
-                                      <div className="text-sm font-semibold" style={{ color: T.text }}>
-                                        {step.label}
-                                      </div>
-                                      <div className="mt-1 text-xs" style={{ color: T.text3 }}>
-                                        {done ? "Etapa concluída" : "Etapa pendente"}
-                                      </div>
-                                    </div>
-                                    <Badge tone={done ? "ok" : "default"}>{done ? "Concluída" : "Pendente"}</Badge>
-                                  </div>
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </EditorSection>
-                    ) : null}
-
-                    {tab === "edicao" ? (
-                      <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1.1fr_0.9fr]">
-                        <div className="space-y-5">
-                          <EditorSection title={editorMode === "create" ? "Novo cadastro" : "Editar cadastro"} hint="Atualize dados cadastrais, observações e exigência fiscal do paciente.">
-                            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                              <div className="md:col-span-2">
-                                <label className={UI.label} style={{ color: T.text3 }}>
-                                  Nome completo
-                                </label>
-                                <input
-                                  value={visibleEditor.nome_completo}
-                                  onChange={(e) => updateEditor("nome_completo", e.target.value)}
-                                  className={cx(UI.input, "mt-2")}
-                                  style={{ borderColor: T.lineStrong, color: T.text }}
-                                  placeholder="Digite o nome do paciente"
-                                />
-                              </div>
-
-                              <div>
-                                <label className={UI.label} style={{ color: T.text3 }}>
-                                  Celular
-                                </label>
-                                <input
-                                  value={visibleEditor.celular}
-                                  onChange={(e) => updateEditor("celular", formatCellphone(e.target.value))}
-                                  className={cx(UI.input, "mt-2")}
-                                  style={{ borderColor: T.lineStrong, color: T.text }}
-                                  placeholder="(11) 99999-9999"
-                                />
-                              </div>
-
-                              <div>
-                                <label className={UI.label} style={{ color: T.text3 }}>
-                                  CPF
-                                </label>
-                                <input
-                                  value={visibleEditor.cpf}
-                                  onChange={(e) => updateEditor("cpf", formatCPF(e.target.value))}
-                                  className={cx(UI.input, "mt-2")}
-                                  style={{ borderColor: T.lineStrong, color: T.text }}
-                                  placeholder="000.000.000-00"
-                                />
-                              </div>
-
-                              <div className="md:col-span-2 rounded-2xl border px-4 py-4" style={{ borderColor: T.line, background: T.surface }}>
-                                <label className="flex cursor-pointer items-start gap-3">
-                                  <input
-                                    type="checkbox"
-                                    className="mt-1 h-4 w-4 rounded border-slate-300"
-                                    checked={visibleEditor.exige_nf}
-                                    onChange={(e) => updateEditor("exige_nf", e.target.checked)}
-                                  />
-                                  <div>
-                                    <div className="text-sm font-semibold" style={{ color: T.text }}>
-                                      Exigir entrega de NF
-                                    </div>
-                                    <div className="mt-1 text-xs leading-5" style={{ color: T.text3 }}>
-                                      Ative quando a etapa de entrega de nota fiscal fizer parte do fluxo desse paciente.
-                                    </div>
-                                  </div>
-                                </label>
-                              </div>
-
-                              <div className="md:col-span-2">
-                                <label className={UI.label} style={{ color: T.text3 }}>
-                                  Observações
-                                </label>
-                                <textarea
-                                  value={visibleEditor.observacoes || ""}
-                                  onChange={(e) => updateEditor("observacoes", e.target.value)}
-                                  className={cx(UI.textarea, "mt-2")}
-                                  style={{ borderColor: T.lineStrong, color: T.text }}
-                                  placeholder="Registre observações clínicas, operacionais ou administrativas"
-                                />
-                              </div>
-                            </div>
-                          </EditorSection>
-                        </div>
-
-                        <div className="space-y-5">
-                          <EditorSection title="Etapas do fluxo" hint="Marque as etapas já concluídas. A etapa atual é recalculada automaticamente.">
-                            <div className="grid gap-3">
-                              {PATIENT_STEPS.map((step) => {
-                                if (step.optional && !visibleEditor.exige_nf) return null;
-                                const done = visibleEditor.etapas[step.key];
-                                return (
-                                  <button
-                                    key={step.key}
-                                    type="button"
-                                    onClick={() => toggleStep(step.key)}
-                                    className="flex items-center gap-3 rounded-2xl border px-3.5 py-3 text-left transition"
-                                    style={{
-                                      borderColor: done ? T.accentSoft3 : T.line,
-                                      background: done ? T.accentSoft : T.surface,
-                                    }}
-                                  >
-                                    <div
-                                      className="grid h-9 w-9 place-items-center rounded-xl border"
-                                      style={{
-                                        borderColor: done ? T.accentSoft3 : T.line,
-                                        background: done ? `linear-gradient(135deg, ${T.accent}, ${T.accent2})` : T.surface2,
-                                        color: done ? "#fff" : T.text3,
-                                      }}
-                                    >
-                                      <CheckCircle2 className="h-4 w-4" />
-                                    </div>
-                                    <div className="min-w-0 flex-1">
-                                      <div className="text-sm font-medium" style={{ color: T.text }}>
-                                        {step.label}
-                                      </div>
-                                      <div className="mt-1 text-xs" style={{ color: T.text3 }}>
-                                        {done ? "Clique para marcar como pendente" : "Clique para marcar como concluída"}
-                                      </div>
-                                    </div>
-                                    <Badge tone={done ? "ok" : "default"}>{done ? "Concluída" : "Pendente"}</Badge>
-                                  </button>
-                                );
-                              })}
-                            </div>
-                          </EditorSection>
-
-                          <EditorSection title="Resumo de salvamento" hint="Conferência rápida antes de gravar as alterações.">
-                            <div className="space-y-4">
-                              <div className="grid grid-cols-2 gap-4">
-                                <DataField label="Etapa atual" value={visibleEditor.etapa_atual ? STEP_LABEL_BY_KEY[visibleEditor.etapa_atual] : "Sem andamento"} />
-                                <DataField label="Próxima etapa" value={nextPendingStep(visibleEditor)?.label || "Fluxo concluído"} />
-                              </div>
-
-                              <div>
-                                <div className="mb-2 flex items-center justify-between text-[11px] font-semibold uppercase tracking-[0.12em]" style={{ color: T.text3 }}>
-                                  <span>Progresso</span>
-                                  <span>{selectedProgress}%</span>
-                                </div>
-                                <ProgressBar value={selectedProgress} />
-                              </div>
-
-                              <div className="flex flex-wrap items-center gap-3">
-                                <Button tone="primary" onClick={saveEditor} loading={saving}>
-                                  <Save className="h-4 w-4" />
-                                  {editorMode === "create" ? "Salvar cadastro" : "Salvar alterações"}
-                                </Button>
-
-                                {editorMode === "create" ? (
-                                  <Button
-                                    tone="secondary"
-                                    onClick={() => {
-                                      setEditorMode("edit");
-                                      setEditor(selectedRow ? { ...selectedRow, etapas: { ...selectedRow.etapas } } : null);
-                                      setSelectedId(selectedRow?.id ?? rows[0]?.id ?? null);
-                                      setTab("resumo");
-                                    }}
-                                  >
-                                    <X className="h-4 w-4" />
-                                    Cancelar
-                                  </Button>
-                                ) : (
-                                  <Button
-                                    tone="secondary"
-                                    onClick={() => selectedRow && setEditor({ ...selectedRow, etapas: { ...selectedRow.etapas } })}
-                                  >
-                                    <RefreshCw className="h-4 w-4" />
-                                    Descartar mudanças
-                                  </Button>
-                                )}
-                              </div>
-                            </div>
-                          </EditorSection>
-                        </div>
-                      </div>
-                    ) : null}
+                  <div className={cx(UI.sectionHint, "mt-1")} style={{ color: T.text3 }}>
+                    Registre informações complementares sobre o paciente.
                   </div>
-                )}
+
+                  <textarea
+                    value={editing.observacoes || ""}
+                    onChange={(e) => setField("observacoes", e.target.value)}
+                    className={cx(UI.textarea, "mt-4")}
+                    style={{ borderColor: T.border }}
+                    placeholder="Pendências, orientações, detalhes do atendimento ou observações gerais..."
+                  />
+                </div>
+
+                <MsgBox m={msg} />
               </div>
-            </section>
+            )}
           </div>
-        </section>
-      </div>
-    </main>
+
+          <div className="border-t bg-white px-5 py-4 flex items-center justify-end gap-3" style={{ borderColor: T.border }}>
+            <Btn tone="secondary" onClick={closeDrawer} disabled={saving}>
+              Fechar
+            </Btn>
+            <Btn tone="primary" onClick={savePatient} disabled={!selectedPatient || saving} loading={saving}>
+              Salvar alterações
+            </Btn>
+          </div>
+        </div>
+      </aside>
+
+      <style jsx global>{`
+        input:focus,
+        textarea:focus,
+        select:focus {
+          outline: none !important;
+          box-shadow: 0 0 0 2px ${T.accentRing} !important;
+        }
+      `}</style>
+    </section>
   );
 }

@@ -56,7 +56,7 @@ const UI = {
     top: "#baa391",
     top2: "#baa391",
     sub: "#10321F",
-    soft: "#EEF2F0",
+    soft: "#F4F6F8",
     border: "rgba(0,0,0,0.10)",
     text: "rgba(0,0,0,0.88)",
     text2: "rgba(0,0,0,0.62)",
@@ -1216,24 +1216,24 @@ export default function PortalClient() {
                 <div className="relative z-10 min-h-[100svh] supports-[height:100dvh]:min-h-[100dvh] flex items-center justify-center px-4 py-10">
                     <div className="w-full max-w-[460px]">
                         {/* glow */}
-                        <div
+                        {/* <div
                             className="absolute left-1/2 -translate-x-1/2 -mt-10 h-40 w-[520px] max-w-[92vw] blur-3xl opacity-70 pointer-events-none"
                             style={{
                                 background:
                                     "radial-gradient(55% 55% at 50% 50%, rgb(var(--accent-rgb) / 0.35) 0%, transparent 70%)",
                             }}
-                        />
+                        /> */}
 
                         <div
                             className="relative rounded-3xl border overflow-hidden shadow-[0_35px_90px_-50px_rgba(0,0,0,0.95)]"
                             style={{
                                 borderColor: "rgba(255,255,255,0.18)",
-                                background: "rgba(8, 16, 12, 0.55)",
+                                background: "rgba(161, 136, 108, 0.88)",
                                 backdropFilter: "blur(16px)",
                                 WebkitBackdropFilter: "blur(16px)",
                             }}
                         >
-                            <div className="h-1.5 w-full" style={{ background: "var(--accent)" }} />
+                            {/* <div className="h-1.5 w-full" style={{ background: "var(--accent)" }} /> */}
 
                             <div className="p-6 sm:p-8">
                                 <div className="mb-6">
@@ -1547,7 +1547,7 @@ export default function PortalClient() {
             </header>
 
             {/* CONTENT */}
-            <main className="flex-1 min-h-0 relative bg-white">
+            <main className="flex-1 min-h-0 relative bg-[#F4F6F]">
                 {active === "home" && (
                     <div className="absolute inset-0 overflow-hidden">
                         {/* <Image

@@ -3,33 +3,23 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Activity,
-  ArrowRight,
-  CalendarClock,
-  CheckCheck,
+  CalendarDays,
   CheckCircle2,
-  ChevronLeft,
-  ChevronRight,
-  Circle,
   CircleAlert,
   ClipboardList,
   Clock3,
-  Copy,
-  Eraser,
   FileText,
   Filter,
-  LayoutDashboard,
-  Phone,
+  Funnel,
   Receipt,
   RefreshCw,
   Search,
-  ShieldCheck,
-  Sparkles,
   TrendingUp,
   UserRound,
-  WalletCards,
 } from "lucide-react";
 
-const cx = (...parts: Array<string | false | null | undefined>) => parts.filter(Boolean).join(" ");
+const cx = (...parts: Array<string | false | null | undefined>) =>
+  parts.filter(Boolean).join(" ");
 
 const T = {
   bg: "#F4F7FB",
@@ -89,7 +79,9 @@ type ApiListResponse = {
   error?: string;
 };
 
-const STEP_LABEL_BY_KEY = Object.fromEntries(PATIENT_STEPS.map((s) => [s.key, s.label])) as Record<StepKey, string>;
+const STEP_LABEL_BY_KEY = Object.fromEntries(
+  PATIENT_STEPS.map((s) => [s.key, s.label])
+) as Record<StepKey, string>;
 
 function digitsOnly(v: string) {
   return String(v || "").replace(/\D+/g, "");
@@ -122,17 +114,8 @@ function brDate(iso?: string | null) {
   });
 }
 
-function brDateTime(iso?: string | null) {
-  if (!iso) return "-";
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return String(iso);
-  return d.toLocaleString("pt-BR", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+function brMonthShort(date: Date) {
+  return date.toLocaleDateString("pt-BR", { month: "short" }).replace(".", "");
 }
 
 function emptySteps(): PatientSteps {
@@ -152,7 +135,9 @@ function deriveCurrentStep(steps: PatientSteps, exigeNF: boolean): StepKey | nul
 }
 
 function countCompletedSteps(steps: PatientSteps, exigeNF: boolean) {
-  return PATIENT_STEPS.filter((step) => !step.optional || exigeNF).filter((step) => steps[step.key]).length;
+  return PATIENT_STEPS.filter((step) => !step.optional || exigeNF).filter(
+    (step) => steps[step.key]
+  ).length;
 }
 
 function totalRelevantSteps(exigeNF: boolean) {
@@ -166,12 +151,9 @@ function progressPct(steps: PatientSteps, exigeNF: boolean) {
 }
 
 function nextPendingStep(steps: PatientSteps, exigeNF: boolean) {
-  return PATIENT_STEPS.find((step) => (!step.optional || exigeNF) && !steps[step.key]) ?? null;
-}
-
-function parseStepOrder(key: StepKey | null) {
-  if (!key) return -1;
-  return PATIENT_STEPS.findIndex((step) => step.key === key);
+  return (
+    PATIENT_STEPS.find((step) => (!step.optional || exigeNF) && !steps[step.key]) ?? null
+  );
 }
 
 function patientMatches(row: PatientRow, q: string) {
@@ -186,7 +168,9 @@ function patientMatches(row: PatientRow, q: string) {
   );
 }
 
-function makePatient(data: Partial<PatientRow> & Pick<PatientRow, "id" | "nome_completo" | "celular" | "cpf">): PatientRow {
+function makePatient(
+  data: Partial<PatientRow> & Pick<PatientRow, "id" | "nome_completo" | "celular" | "cpf">
+): PatientRow {
   const exige_nf = data.exige_nf ?? false;
   const etapas = {
     ...emptySteps(),
@@ -223,9 +207,7 @@ function getStatusMeta(row: PatientRow) {
     return {
       key: "concluido" as const,
       label: "Concluído",
-      caption: "Fluxo finalizado",
-      color: T.ok,
-      soft: T.okSoft,
+      tone: "green" as const,
       icon: CheckCircle2,
     };
   }
@@ -234,9 +216,7 @@ function getStatusMeta(row: PatientRow) {
     return {
       key: "avancado" as const,
       label: "Avançado",
-      caption: "Próximo do fechamento",
-      color: T.blue,
-      soft: T.blueSoft,
+      tone: "blue" as const,
       icon: TrendingUp,
     };
   }
@@ -244,20 +224,60 @@ function getStatusMeta(row: PatientRow) {
   return {
     key: "andamento" as const,
     label: "Em andamento",
-    caption: "Requer acompanhamento",
-    color: T.amber,
-    soft: T.amberSoft,
+    tone: "amber" as const,
     icon: Clock3,
   };
 }
 
-function copyText(value: string) {
-  if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
-    navigator.clipboard.writeText(value).catch(() => undefined);
-  }
+function daysSince(iso?: string | null) {
+  if (!iso) return null;
+  const created = new Date(iso);
+  if (Number.isNaN(created.getTime())) return null;
+  const diffMs = Date.now() - created.getTime();
+  return Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)));
 }
 
-function ShellCard({ children, className, soft = false }: { children: React.ReactNode; className?: string; soft?: boolean }) {
+function monthSeries(rows: PatientRow[], months = 6) {
+  const now = new Date();
+  const series = Array.from({ length: months }).map((_, index) => {
+    const date = new Date(now.getFullYear(), now.getMonth() - (months - 1 - index), 1);
+    const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+    return {
+      key,
+      label: brMonthShort(date),
+      total: 0,
+      concluidos: 0,
+    };
+  });
+
+  rows.forEach((row) => {
+    if (!row.created_at) return;
+    const date = new Date(row.created_at);
+    if (Number.isNaN(date.getTime())) return;
+    const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+    const bucket = series.find((item) => item.key === key);
+    if (!bucket) return;
+    bucket.total += 1;
+    if (progressPct(row.etapas, row.exige_nf) === 100) bucket.concluidos += 1;
+  });
+
+  return series;
+}
+
+function avg<T>(items: T[], fn: (item: T) => number) {
+  if (!items.length) return 0;
+  return Math.round(items.reduce((sum, item) => sum + fn(item), 0) / items.length);
+}
+
+function ShellCard({
+  children,
+  className,
+  soft = false,
+}: {
+  children: React.ReactNode;
+  className?: string;
+  soft?: boolean;
+}) {
   return (
     <div
       className={cx("rounded-[26px] border", className)}
@@ -275,12 +295,10 @@ function ShellCard({ children, className, soft = false }: { children: React.Reac
 function Btn({
   children,
   tone = "primary",
-  loading,
   className,
   ...props
 }: React.ButtonHTMLAttributes<HTMLButtonElement> & {
   tone?: "primary" | "secondary" | "ghost";
-  loading?: boolean;
 }) {
   const palette =
     tone === "primary"
@@ -292,21 +310,13 @@ function Btn({
   return (
     <button
       {...props}
-      disabled={loading || props.disabled}
       className={cx(
         "inline-flex h-11 items-center justify-center gap-2 rounded-2xl border px-4 text-sm font-semibold transition active:translate-y-[0.5px] disabled:cursor-not-allowed disabled:opacity-60",
         className
       )}
       style={palette}
     >
-      {loading ? (
-        <>
-          <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-          Atualizando...
-        </>
-      ) : (
-        children
-      )}
+      {children}
     </button>
   );
 }
@@ -330,51 +340,49 @@ function Badge({
             : { background: T.cardSoft, color: T.text2, borderColor: T.line };
 
   return (
-    <span className="inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-semibold" style={palette}>
+    <span
+      className="inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-semibold"
+      style={palette}
+    >
       {children}
     </span>
   );
 }
 
-function ProgressBar({ value }: { value: number }) {
+function ProgressBar({ value, color = "green" }: { value: number; color?: "green" | "blue" | "amber" }) {
+  const fill = color === "blue" ? T.blue : color === "amber" ? T.amber : T.green;
+  const soft = color === "blue" ? T.blueSoft : color === "amber" ? T.amberSoft : T.greenSoft;
   return (
     <div className="h-2.5 overflow-hidden rounded-full" style={{ background: T.cardMuted }}>
       <div
         className="h-full rounded-full transition-all"
         style={{
           width: `${Math.max(0, Math.min(100, value))}%`,
-          background: "linear-gradient(90deg, #166534 0%, #22C55E 100%)",
+          background: `linear-gradient(90deg, ${fill} 0%, ${soft.includes("rgba") ? fill : fill} 100%)`,
         }}
       />
     </div>
   );
 }
 
-function RingProgress({ value }: { value: number }) {
-  const pct = Math.max(0, Math.min(100, value));
-  return (
-    <div
-      className="relative flex h-[138px] w-[138px] items-center justify-center rounded-full"
-      style={{ background: `conic-gradient(${T.green} 0% ${pct}%, ${T.cardMuted} ${pct}% 100%)` }}
-    >
-      <div className="flex h-[104px] w-[104px] flex-col items-center justify-center rounded-full" style={{ background: T.card }}>
-        <div className="text-[30px] font-semibold tracking-tight" style={{ color: T.text }}>{pct}%</div>
-        <div className="text-[10px] font-semibold uppercase tracking-[0.18em]" style={{ color: T.text3 }}>
-          progresso
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function EmptyState({ title, hint }: { title: string; hint: string }) {
   return (
-    <div className="rounded-[24px] border p-8 text-center" style={{ borderColor: T.line, background: T.cardSoft }}>
-      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl" style={{ background: T.cardMuted }}>
+    <div
+      className="rounded-[24px] border p-8 text-center"
+      style={{ borderColor: T.line, background: T.cardSoft }}
+    >
+      <div
+        className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl"
+        style={{ background: T.cardMuted }}
+      >
         <UserRound className="h-6 w-6" style={{ color: T.text3 }} />
       </div>
-      <div className="mt-4 text-sm font-semibold" style={{ color: T.text }}>{title}</div>
-      <div className="mt-1 text-sm" style={{ color: T.text3 }}>{hint}</div>
+      <div className="mt-4 text-sm font-semibold" style={{ color: T.text }}>
+        {title}
+      </div>
+      <div className="mt-1 text-sm" style={{ color: T.text3 }}>
+        {hint}
+      </div>
     </div>
   );
 }
@@ -405,11 +413,23 @@ function KPI({
     <ShellCard className="p-5">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <div className="text-xs font-semibold uppercase tracking-[0.12em]" style={{ color: T.text3 }}>{title}</div>
-          <div className="mt-3 text-[30px] font-semibold tracking-tight" style={{ color: T.text }}>{value}</div>
-          <div className="mt-1 text-xs leading-5" style={{ color: T.text3 }}>{hint}</div>
+          <div
+            className="text-xs font-semibold uppercase tracking-[0.12em]"
+            style={{ color: T.text3 }}
+          >
+            {title}
+          </div>
+          <div className="mt-3 text-[30px] font-semibold tracking-tight" style={{ color: T.text }}>
+            {value}
+          </div>
+          <div className="mt-1 text-xs leading-5" style={{ color: T.text3 }}>
+            {hint}
+          </div>
         </div>
-        <div className="flex h-12 w-12 items-center justify-center rounded-2xl" style={{ background: palette.soft, color: palette.fg }}>
+        <div
+          className="flex h-12 w-12 items-center justify-center rounded-2xl"
+          style={{ background: palette.soft, color: palette.fg }}
+        >
           <Icon className="h-5 w-5" />
         </div>
       </div>
@@ -420,77 +440,75 @@ function KPI({
 function FilterField({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <label className="text-xs font-semibold uppercase tracking-[0.12em]" style={{ color: T.text3 }}>{label}</label>
+      <label className="text-xs font-semibold uppercase tracking-[0.12em]" style={{ color: T.text3 }}>
+        {label}
+      </label>
       <div className="mt-2">{children}</div>
     </div>
   );
 }
 
-function FieldInput(props: React.InputHTMLAttributes<HTMLInputElement>) {
+function FieldInput({ className, ...props }: React.InputHTMLAttributes<HTMLInputElement>) {
   return (
     <input
       {...props}
-      className="h-11 w-full rounded-2xl border bg-white px-3 text-sm outline-none transition focus:ring-4"
+      className={cx(
+        "h-11 w-full rounded-2xl border bg-white px-3 text-sm outline-none transition focus:ring-4",
+        className
+      )}
       style={{ borderColor: T.lineStrong, color: T.text }}
     />
   );
 }
 
-function FieldSelect(props: React.SelectHTMLAttributes<HTMLSelectElement>) {
+function FieldSelect({ className, ...props }: React.SelectHTMLAttributes<HTMLSelectElement>) {
   return (
     <select
       {...props}
-      className="h-11 w-full rounded-2xl border bg-white px-3 text-sm outline-none transition focus:ring-4"
+      className={cx(
+        "h-11 w-full rounded-2xl border bg-white px-3 text-sm outline-none transition focus:ring-4",
+        className
+      )}
       style={{ borderColor: T.lineStrong, color: T.text }}
     />
   );
 }
 
-function SegmentTabs({
-  value,
-  onChange,
-  counts,
+function SectionTitle({
+  icon: Icon,
+  title,
+  hint,
 }: {
-  value: "all" | "em_andamento" | "concluido";
-  onChange: (v: "all" | "em_andamento" | "concluido") => void;
-  counts: { all: number; em_andamento: number; concluido: number };
+  icon: React.ComponentType<{ className?: string }>;
+  title: string;
+  hint?: string;
 }) {
-  const items: Array<{ key: "all" | "em_andamento" | "concluido"; label: string; count: number }> = [
-    { key: "all", label: "Todos", count: counts.all },
-    { key: "em_andamento", label: "Em andamento", count: counts.em_andamento },
-    { key: "concluido", label: "Concluídos", count: counts.concluido },
-  ];
-
   return (
-    <div className="inline-flex rounded-2xl border p-1" style={{ borderColor: T.line, background: T.cardSoft }}>
-      {items.map((item) => {
-        const active = item.key === value;
-        return (
-          <button
-            key={item.key}
-            type="button"
-            onClick={() => onChange(item.key)}
-            className="inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold transition"
-            style={{
-              background: active ? T.card : "transparent",
-              color: active ? T.text : T.text3,
-              boxShadow: active ? "0 2px 8px rgba(15, 23, 42, 0.06)" : "none",
-            }}
-          >
-            <span>{item.label}</span>
-            <span className="rounded-full px-2 py-0.5 text-[11px]" style={{ background: active ? T.cardSoft : "transparent" }}>
-              {item.count}
-            </span>
-          </button>
-        );
-      })}
+    <div className="flex items-start justify-between gap-3">
+      <div className="flex items-center gap-2">
+        <div
+          className="flex h-10 w-10 items-center justify-center rounded-2xl"
+          style={{ background: T.cardMuted, color: T.text2 }}
+        >
+          <Icon className="h-4 w-4" />
+        </div>
+        <div>
+          <div className="text-sm font-semibold" style={{ color: T.text }}>
+            {title}
+          </div>
+          {hint ? (
+            <div className="text-xs" style={{ color: T.text3 }}>
+              {hint}
+            </div>
+          ) : null}
+        </div>
+      </div>
     </div>
   );
 }
 
 function StageDistribution({ rows }: { rows: PatientRow[] }) {
   const total = Math.max(rows.length, 1);
-
   return (
     <div className="space-y-3">
       {PATIENT_STEPS.map((step) => {
@@ -499,10 +517,14 @@ function StageDistribution({ rows }: { rows: PatientRow[] }) {
         return (
           <div key={step.key}>
             <div className="mb-2 flex items-center justify-between gap-2 text-xs">
-              <span className="truncate font-medium" style={{ color: T.text2 }}>{step.label}</span>
-              <span className="font-semibold" style={{ color: T.text }}>{count}</span>
+              <span className="truncate font-medium" style={{ color: T.text2 }}>
+                {step.label}
+              </span>
+              <span className="font-semibold" style={{ color: T.text }}>
+                {count}
+              </span>
             </div>
-            <ProgressBar value={pct} />
+            <ProgressBar value={pct} color="green" />
           </div>
         );
       })}
@@ -510,127 +532,35 @@ function StageDistribution({ rows }: { rows: PatientRow[] }) {
   );
 }
 
-function PatientListItem({
-  row,
-  active,
-  onSelect,
-}: {
-  row: PatientRow;
-  active: boolean;
-  onSelect: () => void;
-}) {
-  const pct = progressPct(row.etapas, row.exige_nf);
-  const meta = getStatusMeta(row);
-  const nextStep = nextPendingStep(row.etapas, row.exige_nf);
-  const Icon = meta.icon;
+function MonthlyMovement({ rows }: { rows: PatientRow[] }) {
+  const series = useMemo(() => monthSeries(rows), [rows]);
+  const maxValue = Math.max(1, ...series.map((item) => item.total));
 
   return (
-    <button
-      type="button"
-      onClick={onSelect}
-      className="w-full rounded-[24px] border p-4 text-left transition"
-      style={{
-        borderColor: active ? "rgba(22, 101, 52, 0.22)" : T.line,
-        background: active ? "linear-gradient(180deg, rgba(22, 101, 52, 0.05), #FFFFFF)" : T.card,
-        boxShadow: active ? "0 14px 34px rgba(22, 101, 52, 0.08)" : T.shadowSoft,
-      }}
-    >
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="truncate text-[15px] font-semibold" style={{ color: T.text }}>{row.nome_completo}</div>
-            {row.exige_nf ? <Badge tone="amber"><Receipt className="h-3.5 w-3.5" /> NF</Badge> : null}
-          </div>
-          <div className="mt-1 flex flex-wrap items-center gap-3 text-xs" style={{ color: T.text3 }}>
-            <span>{row.cpf}</span>
-            <span>{row.celular}</span>
-            <span>{brDate(row.created_at)}</span>
-          </div>
-        </div>
-        <Badge tone={meta.key === "concluido" ? "green" : meta.key === "avancado" ? "blue" : "amber"}>
-          <Icon className="h-3.5 w-3.5" />
-          {meta.label}
-        </Badge>
-      </div>
+    <div className="grid gap-4 md:grid-cols-6">
+      {series.map((item) => {
+        const totalHeight = Math.max(10, Math.round((item.total / maxValue) * 132));
+        const concluidoHeight =
+          item.total > 0 ? Math.max(8, Math.round((item.concluidos / maxValue) * 132)) : 0;
 
-      <div className="mt-4 grid gap-3 lg:grid-cols-[1fr_auto] lg:items-center">
-        <div>
-          <div className="mb-2 flex items-center justify-between gap-2 text-xs">
-            <span style={{ color: T.text3 }}>Progresso do fluxo</span>
-            <span className="font-semibold" style={{ color: T.text }}>{pct}%</span>
-          </div>
-          <ProgressBar value={pct} />
-        </div>
-        <div className="rounded-2xl px-3 py-2 text-xs font-semibold" style={{ background: T.cardSoft, color: T.text2 }}>
-          {countCompletedSteps(row.etapas, row.exige_nf)}/{totalRelevantSteps(row.exige_nf)} etapas
-        </div>
-      </div>
-
-      <div className="mt-4 grid gap-3 md:grid-cols-2">
-        <div className="rounded-2xl border px-3 py-3" style={{ borderColor: T.line, background: T.cardSoft }}>
-          <div className="text-[11px] font-semibold uppercase tracking-[0.12em]" style={{ color: T.text3 }}>Etapa atual</div>
-          <div className="mt-1 text-sm font-semibold" style={{ color: T.text }}>
-            {row.etapa_atual ? STEP_LABEL_BY_KEY[row.etapa_atual] : "Não iniciada"}
-          </div>
-        </div>
-        <div className="rounded-2xl border px-3 py-3" style={{ borderColor: T.line, background: T.cardSoft }}>
-          <div className="text-[11px] font-semibold uppercase tracking-[0.12em]" style={{ color: T.text3 }}>Próxima ação</div>
-          <div className="mt-1 text-sm font-semibold" style={{ color: T.text }}>
-            {nextStep ? nextStep.label : "Fluxo concluído"}
-          </div>
-        </div>
-      </div>
-    </button>
-  );
-}
-
-function DetailField({ label, value, onCopy }: { label: string; value: string; onCopy?: () => void }) {
-  return (
-    <div className="rounded-[20px] border p-4" style={{ borderColor: T.line, background: T.cardSoft }}>
-      <div className="flex items-center justify-between gap-3">
-        <div className="text-[11px] font-semibold uppercase tracking-[0.12em]" style={{ color: T.text3 }}>{label}</div>
-        {onCopy ? (
-          <button type="button" onClick={onCopy} className="inline-flex items-center gap-1 text-xs font-semibold" style={{ color: T.text3 }}>
-            <Copy className="h-3.5 w-3.5" />
-            Copiar
-          </button>
-        ) : null}
-      </div>
-      <div className="mt-2 text-sm font-semibold" style={{ color: T.text }}>{value}</div>
-    </div>
-  );
-}
-
-function Timeline({ row }: { row: PatientRow }) {
-  return (
-    <div className="space-y-3">
-      {PATIENT_STEPS.filter((step) => !step.optional || row.exige_nf).map((step, index) => {
-        const done = row.etapas[step.key];
-        const current = row.etapa_atual === step.key && !done;
         return (
-          <div key={step.key} className="flex items-start gap-3">
-            <div className="flex flex-col items-center">
+          <div key={item.key} className="flex flex-col items-center gap-3">
+            <div className="flex h-[154px] items-end gap-2">
               <div
-                className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-full border"
-                style={{
-                  borderColor: done ? "rgba(34, 197, 94, 0.22)" : current ? "rgba(37, 99, 235, 0.22)" : T.line,
-                  background: done ? T.greenSoft : current ? T.blueSoft : T.card,
-                  color: done ? T.green : current ? T.blue : T.text3,
-                }}
-              >
-                {done ? <CheckCheck className="h-4 w-4" /> : current ? <Activity className="h-4 w-4" /> : <Circle className="h-3.5 w-3.5" />}
-              </div>
-              {index < PATIENT_STEPS.filter((s) => !s.optional || row.exige_nf).length - 1 ? (
-                <div className="mt-2 h-8 w-px" style={{ background: T.lineStrong }} />
-              ) : null}
+                className="w-5 rounded-t-full"
+                style={{ height: totalHeight, background: T.blueSoft, border: `1px solid ${T.line}` }}
+              />
+              <div
+                className="w-5 rounded-t-full"
+                style={{ height: concluidoHeight, background: T.green, opacity: item.concluidos ? 1 : 0.25 }}
+              />
             </div>
-            <div className="min-w-0 flex-1 pt-1">
-              <div className="flex flex-wrap items-center gap-2">
-                <div className="text-sm font-semibold" style={{ color: T.text }}>{step.label}</div>
-                {done ? <Badge tone="green">Concluída</Badge> : current ? <Badge tone="blue">Atual</Badge> : <Badge>Pendente</Badge>}
+            <div className="text-center">
+              <div className="text-xs font-semibold uppercase" style={{ color: T.text3 }}>
+                {item.label}
               </div>
-              <div className="mt-1 text-xs leading-5" style={{ color: T.text3 }}>
-                {done ? "Etapa já finalizada no fluxo do paciente." : current ? "Esta é a frente operacional mais relevante no momento." : "Etapa ainda não concluída."}
+              <div className="mt-1 text-sm font-semibold" style={{ color: T.text }}>
+                {item.total}
               </div>
             </div>
           </div>
@@ -640,146 +570,232 @@ function Timeline({ row }: { row: PatientRow }) {
   );
 }
 
-function PriorityQueue({ rows, onSelect }: { rows: PatientRow[]; onSelect: (id: string) => void }) {
-  if (!rows.length) {
-    return <EmptyState title="Nenhuma prioridade encontrada" hint="Com os filtros atuais, não há pacientes exigindo atenção imediata." />;
-  }
+function FunnelBoard({ rows }: { rows: PatientRow[] }) {
+  const items = PATIENT_STEPS.map((step) => {
+    const count = rows.filter((row) => row.etapa_atual === step.key).length;
+    return { ...step, count };
+  });
+  const maxCount = Math.max(1, ...items.map((item) => item.count));
 
   return (
     <div className="space-y-3">
-      {rows.map((row, index) => {
-        const nextStep = nextPendingStep(row.etapas, row.exige_nf);
+      {items.map((item) => {
+        const width = Math.max(14, Math.round((item.count / maxCount) * 100));
         return (
-          <button
-            key={row.id}
-            type="button"
-            onClick={() => onSelect(row.id)}
-            className="w-full rounded-[22px] border p-4 text-left transition"
-            style={{ borderColor: T.line, background: T.cardSoft }}
-          >
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <div className="text-xs font-semibold uppercase tracking-[0.12em]" style={{ color: T.text3 }}>
-                  Prioridade {index + 1}
-                </div>
-                <div className="mt-1 text-sm font-semibold" style={{ color: T.text }}>{row.nome_completo}</div>
-                <div className="mt-1 text-xs" style={{ color: T.text3 }}>{nextStep ? nextStep.label : "Concluir revisão final"}</div>
+          <div key={item.key} className="space-y-2">
+            <div className="flex items-center justify-between gap-3 text-xs">
+              <div className="font-medium" style={{ color: T.text2 }}>
+                {item.label}
               </div>
-              <div className="rounded-full px-2.5 py-1 text-[11px] font-semibold" style={{ background: T.redSoft, color: T.red }}>
-                {progressPct(row.etapas, row.exige_nf)}%
+              <div className="font-semibold" style={{ color: T.text }}>
+                {item.count}
               </div>
             </div>
-          </button>
+            <div className="rounded-full" style={{ background: T.cardMuted, padding: 4 }}>
+              <div
+                className="flex h-10 items-center rounded-full px-4 text-sm font-semibold"
+                style={{ width: `${width}%`, background: T.greenSoft, color: T.green }}
+              >
+                {item.count} pacientes
+              </div>
+            </div>
+          </div>
         );
       })}
     </div>
   );
 }
 
-function DetailPanel({ row }: { row: PatientRow | null }) {
-  if (!row) {
-    return <EmptyState title="Selecione um paciente" hint="Escolha um registro da carteira para visualizar o andamento completo." />;
-  }
+function AgingBreakdown({ rows }: { rows: PatientRow[] }) {
+  const bands = [
+    { key: "ate7", label: "Até 7 dias", count: 0, tone: "green" as const },
+    { key: "ate15", label: "8 a 15 dias", count: 0, tone: "blue" as const },
+    { key: "ate30", label: "16 a 30 dias", count: 0, tone: "amber" as const },
+    { key: "mais30", label: "> 30 dias", count: 0, tone: "red" as const },
+  ];
 
-  const pct = progressPct(row.etapas, row.exige_nf);
-  const nextStep = nextPendingStep(row.etapas, row.exige_nf);
-  const meta = getStatusMeta(row);
-  const StatusIcon = meta.icon;
+  rows.forEach((row) => {
+    const days = daysSince(row.created_at);
+    if (days == null) return;
+    if (days <= 7) bands[0].count += 1;
+    else if (days <= 15) bands[1].count += 1;
+    else if (days <= 30) bands[2].count += 1;
+    else bands[3].count += 1;
+  });
 
   return (
-    <div className="space-y-4 xl:sticky xl:top-6">
-      <ShellCard className="overflow-hidden">
-        <div className="border-b px-5 py-5" style={{ borderColor: T.line }}>
-          <div className="flex flex-wrap items-center gap-2">
-            <Badge tone={meta.key === "concluido" ? "green" : meta.key === "avancado" ? "blue" : "amber"}>
-              <StatusIcon className="h-3.5 w-3.5" />
-              {meta.label}
-            </Badge>
-            {row.exige_nf ? <Badge tone="amber"><Receipt className="h-3.5 w-3.5" /> Exige NF</Badge> : <Badge>NF não aplicável</Badge>}
-          </div>
-          <div className="mt-3 text-[22px] font-semibold tracking-tight" style={{ color: T.text }}>{row.nome_completo}</div>
-          <div className="mt-1 text-sm" style={{ color: T.text3 }}>
-            Registro criado em {brDateTime(row.created_at)}
-          </div>
-        </div>
-
-        <div className="grid gap-5 p-5">
-          <div className="grid gap-4 lg:grid-cols-[auto_1fr] lg:items-center">
-            <div className="flex justify-center lg:justify-start">
-              <RingProgress value={pct} />
-            </div>
-            <div className="grid gap-3">
-              <div className="rounded-[22px] border p-4" style={{ borderColor: T.line, background: T.cardSoft }}>
-                <div className="text-[11px] font-semibold uppercase tracking-[0.12em]" style={{ color: T.text3 }}>Etapa atual</div>
-                <div className="mt-1 text-sm font-semibold" style={{ color: T.text }}>
-                  {row.etapa_atual ? STEP_LABEL_BY_KEY[row.etapa_atual] : "Não iniciada"}
-                </div>
+    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
+      {bands.map((band) => (
+        <div
+          key={band.key}
+          className="rounded-[22px] border p-4"
+          style={{ borderColor: T.line, background: T.cardSoft }}
+        >
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <div className="text-[11px] font-semibold uppercase tracking-[0.12em]" style={{ color: T.text3 }}>
+                {band.label}
               </div>
-              <div className="rounded-[22px] border p-4" style={{ borderColor: T.line, background: T.cardSoft }}>
-                <div className="text-[11px] font-semibold uppercase tracking-[0.12em]" style={{ color: T.text3 }}>Próxima ação recomendada</div>
-                <div className="mt-1 text-sm font-semibold" style={{ color: T.text }}>
-                  {nextStep ? nextStep.label : "Fluxo concluído"}
-                </div>
+              <div className="mt-2 text-2xl font-semibold" style={{ color: T.text }}>
+                {band.count}
               </div>
             </div>
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-2">
-            <DetailField label="Celular" value={row.celular} onCopy={() => copyText(row.celular)} />
-            <DetailField label="CPF" value={row.cpf} onCopy={() => copyText(row.cpf)} />
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-3">
-            <div className="rounded-[20px] border p-4" style={{ borderColor: T.line, background: T.cardSoft }}>
-              <div className="text-[11px] font-semibold uppercase tracking-[0.12em]" style={{ color: T.text3 }}>Etapas concluídas</div>
-              <div className="mt-2 text-lg font-semibold" style={{ color: T.text }}>
-                {countCompletedSteps(row.etapas, row.exige_nf)}/{totalRelevantSteps(row.exige_nf)}
-              </div>
-            </div>
-            <div className="rounded-[20px] border p-4" style={{ borderColor: T.line, background: T.cardSoft }}>
-              <div className="text-[11px] font-semibold uppercase tracking-[0.12em]" style={{ color: T.text3 }}>Status fiscal</div>
-              <div className="mt-2 text-sm font-semibold" style={{ color: T.text }}>
-                {row.exige_nf ? (row.etapas.entrega_nf ? "NF entregue" : "NF pendente") : "Não aplicável"}
-              </div>
-            </div>
-            <div className="rounded-[20px] border p-4" style={{ borderColor: T.line, background: T.cardSoft }}>
-              <div className="text-[11px] font-semibold uppercase tracking-[0.12em]" style={{ color: T.text3 }}>Fechamento</div>
-              <div className="mt-2 text-sm font-semibold" style={{ color: T.text }}>
-                {pct === 100 ? "Concluído" : "Em condução"}
-              </div>
-            </div>
+            <Badge tone={band.tone}>{band.label}</Badge>
           </div>
         </div>
-      </ShellCard>
+      ))}
+    </div>
+  );
+}
 
-      <ShellCard className="p-5">
-        <div className="flex items-center gap-2 text-sm font-semibold" style={{ color: T.text }}>
-          <ClipboardList className="h-4 w-4" />
-          Linha do atendimento
-        </div>
-        <div className="mt-4">
-          <Timeline row={row} />
-        </div>
-      </ShellCard>
+function PriorityTable({ rows }: { rows: PatientRow[] }) {
+  if (!rows.length) {
+    return (
+      <EmptyState
+        title="Sem pacientes prioritários"
+        hint="Não há registros em andamento para compor a fila prioritária com os filtros atuais."
+      />
+    );
+  }
 
-      <ShellCard className="p-5" soft>
-        <div className="flex items-center gap-2 text-sm font-semibold" style={{ color: T.text }}>
-          <ShieldCheck className="h-4 w-4" />
-          Observações operacionais
+  return (
+    <div className="overflow-x-auto">
+      <table className="min-w-full text-left">
+        <thead>
+          <tr>
+            {[
+              "Paciente",
+              "Etapa atual",
+              "Próxima ação",
+              "Progresso",
+              "Cadastro",
+            ].map((label) => (
+              <th
+                key={label}
+                className="border-b px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.08em]"
+                style={{ borderColor: T.line, color: T.text3 }}
+              >
+                {label}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row) => {
+            const pct = progressPct(row.etapas, row.exige_nf);
+            const next = nextPendingStep(row.etapas, row.exige_nf);
+            const meta = getStatusMeta(row);
+            const Icon = meta.icon;
+            return (
+              <tr key={row.id}>
+                <td className="border-b px-4 py-4 align-top" style={{ borderColor: T.line }}>
+                  <div className="font-semibold" style={{ color: T.text }}>
+                    {row.nome_completo}
+                  </div>
+                  <div className="mt-1 text-xs" style={{ color: T.text3 }}>
+                    {row.cpf} • {row.celular}
+                  </div>
+                </td>
+                <td className="border-b px-4 py-4 align-top" style={{ borderColor: T.line }}>
+                  <Badge tone={meta.tone}>
+                    <Icon className="h-3.5 w-3.5" />
+                    {row.etapa_atual ? STEP_LABEL_BY_KEY[row.etapa_atual] : "Não iniciada"}
+                  </Badge>
+                </td>
+                <td className="border-b px-4 py-4 align-top text-sm" style={{ borderColor: T.line, color: T.text2 }}>
+                  {next ? next.label : "Fluxo concluído"}
+                </td>
+                <td className="border-b px-4 py-4 align-top" style={{ borderColor: T.line }}>
+                  <div className="flex items-center gap-3">
+                    <div className="w-28">
+                      <ProgressBar value={pct} color={meta.tone === "blue" ? "blue" : meta.tone === "amber" ? "amber" : "green"} />
+                    </div>
+                    <span className="text-sm font-semibold" style={{ color: T.text }}>
+                      {pct}%
+                    </span>
+                  </div>
+                </td>
+                <td className="border-b px-4 py-4 align-top text-sm" style={{ borderColor: T.line, color: T.text2 }}>
+                  {brDate(row.created_at)}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function TopStageCard({ rows }: { rows: PatientRow[] }) {
+  const ranked = PATIENT_STEPS.map((step) => ({
+    ...step,
+    count: rows.filter((row) => row.etapa_atual === step.key).length,
+  })).sort((a, b) => b.count - a.count);
+
+  const first = ranked[0];
+  const second = ranked[1];
+
+  return (
+    <div className="space-y-3">
+      <div className="rounded-[22px] border p-4" style={{ borderColor: T.line, background: T.cardSoft }}>
+        <div className="text-[11px] font-semibold uppercase tracking-[0.12em]" style={{ color: T.text3 }}>
+          Etapa com maior volume
         </div>
-        <div className="mt-3 rounded-[20px] border p-4 text-sm leading-6" style={{ borderColor: T.line, background: T.card, color: row.observacoes?.trim() ? T.text2 : T.text3 }}>
-          {row.observacoes?.trim() || "Nenhuma observação registrada para este paciente."}
+        <div className="mt-2 text-lg font-semibold" style={{ color: T.text }}>
+          {first?.label || "Sem dados"}
         </div>
-      </ShellCard>
+        <div className="mt-1 text-sm" style={{ color: T.text3 }}>
+          {first?.count || 0} pacientes atualmente concentrados.
+        </div>
+      </div>
+      <div className="rounded-[22px] border p-4" style={{ borderColor: T.line, background: T.cardSoft }}>
+        <div className="text-[11px] font-semibold uppercase tracking-[0.12em]" style={{ color: T.text3 }}>
+          Segunda concentração
+        </div>
+        <div className="mt-2 text-lg font-semibold" style={{ color: T.text }}>
+          {second?.label || "Sem dados"}
+        </div>
+        <div className="mt-1 text-sm" style={{ color: T.text3 }}>
+          {second?.count || 0} pacientes nesta camada do fluxo.
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function NotesCard({ rows }: { rows: PatientRow[] }) {
+  const withNotes = rows.filter((row) => row.observacoes?.trim());
+  const lastWithNotes = [...withNotes].sort((a, b) => {
+    const da = a.created_at ? new Date(a.created_at).getTime() : 0;
+    const db = b.created_at ? new Date(b.created_at).getTime() : 0;
+    return db - da;
+  })[0];
+
+  return (
+    <div className="rounded-[22px] border p-4" style={{ borderColor: T.line, background: T.cardSoft }}>
+      <div className="text-[11px] font-semibold uppercase tracking-[0.12em]" style={{ color: T.text3 }}>
+        Última observação relevante
+      </div>
+      {lastWithNotes ? (
+        <>
+          <div className="mt-2 text-sm font-semibold" style={{ color: T.text }}>
+            {lastWithNotes.nome_completo}
+          </div>
+          <div className="mt-2 text-sm leading-6" style={{ color: T.text2 }}>
+            {lastWithNotes.observacoes}
+          </div>
+        </>
+      ) : (
+        <div className="mt-2 text-sm" style={{ color: T.text3 }}>
+          Nenhuma observação preenchida na carteira filtrada.
+        </div>
+      )}
     </div>
   );
 }
 
 export function VisualizacaoPacientesPage() {
-  return <VisualizacaoPacientesPageElite />;
-}
-
-export function VisualizacaoPacientesPageElite() {
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
   const [rows, setRows] = useState<PatientRow[]>([]);
@@ -787,14 +803,11 @@ export function VisualizacaoPacientesPageElite() {
   const [stageFilter, setStageFilter] = useState<"all" | StepKey>("all");
   const [statusFilter, setStatusFilter] = useState<"all" | "em_andamento" | "concluido">("all");
   const [nfFilter, setNfFilter] = useState<"all" | "sim" | "nao">("all");
-  const [page, setPage] = useState(1);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-
-  const pageSize = 8;
 
   const load = useCallback(async () => {
     setLoading(true);
     setMsg(null);
+
     try {
       const res = await fetch("/api/pacientes", { method: "GET", cache: "no-store" });
       if (!res.ok) throw new Error(await parseError(res));
@@ -814,25 +827,18 @@ export function VisualizacaoPacientesPageElite() {
         })
       );
 
-      const ordered = [...items].sort((a, b) => {
-        const aDone = progressPct(a.etapas, a.exige_nf) === 100 ? 1 : 0;
-        const bDone = progressPct(b.etapas, b.exige_nf) === 100 ? 1 : 0;
-        if (aDone !== bDone) return aDone - bDone;
-        const aOrder = parseStepOrder(a.etapa_atual);
-        const bOrder = parseStepOrder(b.etapa_atual);
-        if (aOrder !== bOrder) return aOrder - bOrder;
-        return a.nome_completo.localeCompare(b.nome_completo, "pt-BR");
-      });
-
-      setRows(ordered);
-      if (ordered.length && !selectedId) setSelectedId(ordered[0].id);
+      setRows(items);
     } catch (error) {
       setRows([]);
-      setMsg({ type: "err", text: error instanceof Error ? error.message : "Não foi possível carregar os pacientes." });
+      setMsg({
+        type: "err",
+        text:
+          error instanceof Error ? error.message : "Não foi possível carregar o dashboard de pacientes.",
+      });
     } finally {
       setLoading(false);
     }
-  }, [selectedId]);
+  }, []);
 
   useEffect(() => {
     load();
@@ -841,74 +847,63 @@ export function VisualizacaoPacientesPageElite() {
   const filteredRows = useMemo(() => {
     return rows.filter((row) => {
       const finished = progressPct(row.etapas, row.exige_nf) === 100;
-
       const matchesText = patientMatches(row, query);
       const matchesStage = stageFilter === "all" ? true : row.etapa_atual === stageFilter;
-      const matchesStatus = statusFilter === "all" ? true : statusFilter === "concluido" ? finished : !finished;
+      const matchesStatus =
+        statusFilter === "all" ? true : statusFilter === "concluido" ? finished : !finished;
       const matchesNF = nfFilter === "all" ? true : nfFilter === "sim" ? row.exige_nf : !row.exige_nf;
-
       return matchesText && matchesStage && matchesStatus && matchesNF;
     });
   }, [rows, query, stageFilter, statusFilter, nfFilter]);
 
-  useEffect(() => {
-    setPage(1);
-  }, [query, stageFilter, statusFilter, nfFilter]);
-
-  useEffect(() => {
-    if (!filteredRows.length) {
-      setSelectedId(null);
-      return;
-    }
-    if (!selectedId || !filteredRows.some((row) => row.id === selectedId)) {
-      setSelectedId(filteredRows[0].id);
-    }
-  }, [filteredRows, selectedId]);
-
-  const totalCount = rows.length;
-  const finishedCount = useMemo(() => rows.filter((row) => progressPct(row.etapas, row.exige_nf) === 100).length, [rows]);
-  const inProgressCount = totalCount - finishedCount;
-  const nfCount = useMemo(() => rows.filter((row) => row.exige_nf).length, [rows]);
-  const avgProgress = useMemo(() => {
-    if (!filteredRows.length) return 0;
-    return Math.round(filteredRows.reduce((acc, row) => acc + progressPct(row.etapas, row.exige_nf), 0) / filteredRows.length);
-  }, [filteredRows]);
-
-  const counts = useMemo(
-    () => ({
-      all: filteredRows.length,
-      em_andamento: filteredRows.filter((row) => progressPct(row.etapas, row.exige_nf) < 100).length,
-      concluido: filteredRows.filter((row) => progressPct(row.etapas, row.exige_nf) === 100).length,
-    }),
+  const totalCount = filteredRows.length;
+  const finishedCount = useMemo(
+    () => filteredRows.filter((row) => progressPct(row.etapas, row.exige_nf) === 100).length,
     [filteredRows]
   );
-
-  const totalPages = Math.max(1, Math.ceil(filteredRows.length / pageSize));
-  const pageSafe = Math.min(Math.max(1, page), totalPages);
-  const offset = (pageSafe - 1) * pageSize;
-  const pagedRows = filteredRows.slice(offset, offset + pageSize);
-  const selected = filteredRows.find((row) => row.id === selectedId) ?? pagedRows[0] ?? null;
-
+  const inProgressCount = totalCount - finishedCount;
+  const nfCount = useMemo(() => filteredRows.filter((row) => row.exige_nf).length, [filteredRows]);
+  const avgProgress = useMemo(
+    () => avg(filteredRows, (row) => progressPct(row.etapas, row.exige_nf)),
+    [filteredRows]
+  );
+  const avgAge = useMemo(
+    () => avg(filteredRows, (row) => daysSince(row.created_at) ?? 0),
+    [filteredRows]
+  );
   const mostLoadedStage = useMemo(() => {
-    const series = PATIENT_STEPS.map((step) => ({
+    const ranked = PATIENT_STEPS.map((step) => ({
       ...step,
       count: filteredRows.filter((row) => row.etapa_atual === step.key).length,
-    }));
-    return [...series].sort((a, b) => b.count - a.count)[0] ?? null;
+    })).sort((a, b) => b.count - a.count);
+    return ranked[0] ?? null;
   }, [filteredRows]);
-
   const fiscalPendingCount = useMemo(
     () => filteredRows.filter((row) => row.exige_nf && !row.etapas.entrega_nf).length,
     [filteredRows]
   );
-
   const priorityRows = useMemo(() => {
     return [...filteredRows]
       .filter((row) => progressPct(row.etapas, row.exige_nf) < 100)
-      .sort((a, b) => progressPct(a.etapas, a.exige_nf) - progressPct(b.etapas, b.exige_nf))
-      .slice(0, 3);
+      .sort((a, b) => {
+        const ap = progressPct(a.etapas, a.exige_nf);
+        const bp = progressPct(b.etapas, b.exige_nf);
+        if (ap !== bp) return ap - bp;
+        const ad = daysSince(a.created_at) ?? 0;
+        const bd = daysSince(b.created_at) ?? 0;
+        return bd - ad;
+      })
+      .slice(0, 6);
   }, [filteredRows]);
-
+  const recentRows = useMemo(() => {
+    return [...filteredRows]
+      .sort((a, b) => {
+        const da = a.created_at ? new Date(a.created_at).getTime() : 0;
+        const db = b.created_at ? new Date(b.created_at).getTime() : 0;
+        return db - da;
+      })
+      .slice(0, 5);
+  }, [filteredRows]);
   const clearFilters = useCallback(() => {
     setQuery("");
     setStageFilter("all");
@@ -930,36 +925,64 @@ export function VisualizacaoPacientesPageElite() {
             className="border-b px-5 py-6 sm:px-6"
             style={{
               borderColor: T.line,
-              background: "linear-gradient(135deg, rgba(22, 101, 52, 0.06) 0%, rgba(255,255,255,1) 42%, rgba(37, 99, 235, 0.04) 100%)",
+              background:
+                "linear-gradient(135deg, rgba(22, 101, 52, 0.06) 0%, rgba(255,255,255,1) 42%, rgba(37, 99, 235, 0.04) 100%)",
             }}
           >
-            <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
+            <div className="flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
               <div className="min-w-0">
-                <h1 className="mt-4 text-[30px] font-semibold tracking-tight sm:text-[36px]" style={{ color: T.text }}>
-                  Central de acompanhamento clínico
+                <div
+                  className="inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em]"
+                  style={{ borderColor: T.lineStrong, color: T.text2, background: T.cardSoft }}
+                >
+                  <Activity className="h-3.5 w-3.5" />
+                  dashboard executivo da carteira
+                </div>
+                <h1
+                  className="mt-4 text-[30px] font-semibold tracking-tight sm:text-[36px]"
+                  style={{ color: T.text }}
+                >
+                  Dashboard de acompanhamento clínico
                 </h1>
                 <p className="mt-2 max-w-3xl text-sm leading-6 sm:text-[15px]" style={{ color: T.text3 }}>
-                  Um painel de gestão para acompanhar carteira, progresso por etapa, documentação e prioridade operacional de cada paciente.
+                  Uma leitura gerencial da carteira de pacientes, com foco em volume por etapa, maturidade do pipeline, documentação fiscal e prioridades operacionais.
                 </p>
               </div>
 
-              <div className="grid gap-3 sm:grid-cols-2 xl:min-w-[520px]">
+              <div className="grid gap-3 sm:grid-cols-2 xl:min-w-[560px]">
                 <div className="rounded-[22px] border p-4" style={{ borderColor: T.line, background: T.card }}>
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.12em]" style={{ color: T.text3 }}>Concentração atual</div>
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.12em]" style={{ color: T.text3 }}>
+                    Etapa dominante
+                  </div>
                   <div className="mt-2 text-sm font-semibold" style={{ color: T.text }}>
                     {mostLoadedStage?.label || "Sem etapa dominante"}
                   </div>
+                  <div className="mt-1 text-xs" style={{ color: T.text3 }}>
+                    {mostLoadedStage?.count || 0} pacientes atualmente concentrados.
+                  </div>
                 </div>
                 <div className="rounded-[22px] border p-4" style={{ borderColor: T.line, background: T.card }}>
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.12em]" style={{ color: T.text3 }}>Pendências fiscais</div>
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.12em]" style={{ color: T.text3 }}>
+                    Pendências fiscais
+                  </div>
                   <div className="mt-2 text-sm font-semibold" style={{ color: T.text }}>
                     {fiscalPendingCount} casos aguardando NF
+                  </div>
+                  <div className="mt-1 text-xs" style={{ color: T.text3 }}>
+                    Considerando apenas pacientes com exigência fiscal.
                   </div>
                 </div>
               </div>
             </div>
           </div>
 
+          <div className="grid gap-4 p-5 sm:grid-cols-2 sm:p-6 xl:grid-cols-5">
+            <KPI title="Pacientes" value={totalCount} hint="Total de registros dentro do recorte atual." icon={UserRound} tone="neutral" />
+            <KPI title="Em andamento" value={inProgressCount} hint="Casos ainda em evolução no fluxo clínico." icon={Activity} tone="amber" />
+            <KPI title="Concluídos" value={finishedCount} hint="Fluxos totalmente finalizados." icon={CheckCircle2} tone="green" />
+            <KPI title="Com NF" value={nfCount} hint="Pacientes com obrigação fiscal ativa." icon={Receipt} tone="blue" />
+            <KPI title="Progresso médio" value={`${avgProgress}%`} hint="Nível médio de maturidade da carteira filtrada." icon={TrendingUp} tone="green" />
+          </div>
         </ShellCard>
 
         {msg ? (
@@ -975,18 +998,10 @@ export function VisualizacaoPacientesPageElite() {
           </div>
         ) : null}
 
-        <div className="grid gap-5 2xl:grid-cols-[330px_minmax(0,1fr)_430px] xl:grid-cols-[310px_minmax(0,1fr)]">
+        <div className="grid gap-5 2xl:grid-cols-[320px_minmax(0,1fr)_360px] xl:grid-cols-[320px_minmax(0,1fr)]">
           <div className="space-y-5">
             <ShellCard className="p-5 sm:p-6">
-              <div className="flex items-center gap-2">
-                <div className="flex h-10 w-10 items-center justify-center rounded-2xl" style={{ background: T.cardMuted, color: T.text2 }}>
-                  <Filter className="h-4 w-4" />
-                </div>
-                <div>
-                  <div className="text-sm font-semibold" style={{ color: T.text }}>Filtros de visualização</div>
-                  <div className="text-xs" style={{ color: T.text3 }}>Refine o painel por carteira, estágio e contexto fiscal.</div>
-                </div>
-              </div>
+              <SectionTitle icon={Filter} title="Filtros do dashboard" hint="Refine o recorte analisado para indicadores e quadros." />
 
               <div className="mt-5 grid gap-4">
                 <FilterField label="Busca por nome, CPF ou celular">
@@ -1006,7 +1021,7 @@ export function VisualizacaoPacientesPageElite() {
                 </FilterField>
 
                 <FilterField label="Status do fluxo">
-                  <FieldSelect value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as "all" | "em_andamento" | "concluido")}>
+                  <FieldSelect value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as "all" | "em_andamento" | "concluido") }>
                     <option value="all">Todos</option>
                     <option value="em_andamento">Em andamento</option>
                     <option value="concluido">Concluídos</option>
@@ -1014,32 +1029,36 @@ export function VisualizacaoPacientesPageElite() {
                 </FilterField>
 
                 <FilterField label="Entrega de NF">
-                  <FieldSelect value={nfFilter} onChange={(e) => setNfFilter(e.target.value as "all" | "sim" | "nao")}>
+                  <FieldSelect value={nfFilter} onChange={(e) => setNfFilter(e.target.value as "all" | "sim" | "nao") }>
                     <option value="all">Todos</option>
                     <option value="sim">Exigem NF</option>
                     <option value="nao">Sem NF</option>
                   </FieldSelect>
                 </FilterField>
               </div>
+
+              <div className="mt-5 flex gap-2">
+                <Btn tone="secondary" onClick={load} disabled={loading} className="flex-1">
+                  <RefreshCw className={cx("h-4 w-4", loading && "animate-spin")} />
+                  Atualizar
+                </Btn>
+                <Btn tone="ghost" onClick={clearFilters} className="flex-1">
+                  Limpar
+                </Btn>
+              </div>
             </ShellCard>
 
             <ShellCard className="p-5 sm:p-6" soft>
-              <div className="flex items-center gap-2 text-sm font-semibold" style={{ color: T.text }}>
-                <Activity className="h-4 w-4" />
-                Distribuição por etapa
-              </div>
+              <SectionTitle icon={Funnel} title="Distribuição por etapa" hint="Visualização da concentração atual do pipeline." />
               <div className="mt-4">
                 <StageDistribution rows={filteredRows} />
               </div>
             </ShellCard>
 
             <ShellCard className="p-5 sm:p-6">
-              <div className="flex items-center gap-2 text-sm font-semibold" style={{ color: T.text }}>
-                <CircleAlert className="h-4 w-4" />
-                Prioridades da carteira
-              </div>
+              <SectionTitle icon={CalendarDays} title="Aging da carteira" hint="Tempo de permanência dos registros no pipeline." />
               <div className="mt-4">
-                <PriorityQueue rows={priorityRows} onSelect={setSelectedId} />
+                <AgingBreakdown rows={filteredRows} />
               </div>
             </ShellCard>
           </div>
@@ -1047,84 +1066,131 @@ export function VisualizacaoPacientesPageElite() {
           <div className="space-y-5">
             <ShellCard className="overflow-hidden">
               <div className="border-b px-5 py-5 sm:px-6" style={{ borderColor: T.line }}>
-                <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                  <div>
-                    <div className="text-sm font-semibold" style={{ color: T.text }}>Carteira de pacientes</div>
-                    <div className="mt-1 text-sm" style={{ color: T.text3 }}>
-                      {filteredRows.length} registros em visualização com progresso médio de {avgProgress}%.
-                    </div>
+                <SectionTitle icon={ClipboardList} title="Pipeline do atendimento" hint="Comparativo entre entrada no fluxo e avanço consolidado por etapa." />
+              </div>
+              <div className="grid gap-5 p-5 sm:p-6 xl:grid-cols-[1.2fr_0.8fr]">
+                <div>
+                  <div className="mb-4 text-xs font-semibold uppercase tracking-[0.12em]" style={{ color: T.text3 }}>
+                    Funil por etapa atual
                   </div>
-                  <SegmentTabs value={statusFilter} onChange={setStatusFilter} counts={counts} />
+                  <FunnelBoard rows={filteredRows} />
+                </div>
+                <div>
+                  <div className="mb-4 text-xs font-semibold uppercase tracking-[0.12em]" style={{ color: T.text3 }}>
+                    Highlights operacionais
+                  </div>
+                  <TopStageCard rows={filteredRows} />
                 </div>
               </div>
+            </ShellCard>
 
-              <div className="grid gap-4 p-5 sm:p-6">
-                {pagedRows.length ? (
-                  pagedRows.map((row) => (
-                    <PatientListItem key={row.id} row={row} active={selected?.id === row.id} onSelect={() => setSelectedId(row.id)} />
-                  ))
+            <ShellCard className="overflow-hidden">
+              <div className="border-b px-5 py-5 sm:px-6" style={{ borderColor: T.line }}>
+                <SectionTitle icon={TrendingUp} title="Movimentação recente" hint="Entradas por mês versus quantidade já concluída nesse recorte." />
+              </div>
+              <div className="p-5 sm:p-6">
+                <MonthlyMovement rows={filteredRows} />
+              </div>
+            </ShellCard>
+
+            <ShellCard className="overflow-hidden">
+              <div className="border-b px-5 py-5 sm:px-6" style={{ borderColor: T.line }}>
+                <SectionTitle icon={CircleAlert} title="Fila prioritária" hint="Pacientes com menor progresso e maior necessidade de tração operacional." />
+              </div>
+              <div className="p-0">
+                {loading ? (
+                  <div className="grid gap-4 p-5 sm:p-6">
+                    {Array.from({ length: 4 }).map((_, index) => (
+                      <div key={index} className="h-14 animate-pulse rounded-2xl" style={{ background: T.cardSoft }} />
+                    ))}
+                  </div>
                 ) : (
-                  <EmptyState title="Nenhum paciente encontrado" hint="Ajuste os filtros para ampliar a visualização da carteira." />
+                  <PriorityTable rows={priorityRows} />
                 )}
               </div>
+            </ShellCard>
+          </div>
 
-              <div className="border-t px-5 py-4 sm:px-6" style={{ borderColor: T.line }}>
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="text-xs" style={{ color: T.text3 }}>
-                    Página <span style={{ color: T.text, fontWeight: 700 }}>{pageSafe}</span> de <span style={{ color: T.text, fontWeight: 700 }}>{totalPages}</span>
+          <div className="space-y-5 2xl:block xl:col-span-2 2xl:col-span-1">
+            <ShellCard className="p-5 sm:p-6">
+              <SectionTitle icon={FileText} title="Resumo executivo" hint="Indicadores auxiliares para leitura rápida da carteira." />
+              <div className="mt-4 grid gap-3">
+                <div className="rounded-[22px] border p-4" style={{ borderColor: T.line, background: T.cardSoft }}>
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.12em]" style={{ color: T.text3 }}>
+                    Progresso médio
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Btn tone="secondary" disabled={pageSafe <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>
-                      <ChevronLeft className="h-4 w-4" />
-                      Anterior
-                    </Btn>
-                    <Btn tone="secondary" disabled={pageSafe >= totalPages} onClick={() => setPage((p) => Math.min(totalPages, p + 1))}>
-                      Próxima
-                      <ChevronRight className="h-4 w-4" />
-                    </Btn>
+                  <div className="mt-2 text-2xl font-semibold" style={{ color: T.text }}>
+                    {avgProgress}%
+                  </div>
+                  <div className="mt-2">
+                    <ProgressBar value={avgProgress} color="green" />
+                  </div>
+                </div>
+                <div className="rounded-[22px] border p-4" style={{ borderColor: T.line, background: T.cardSoft }}>
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.12em]" style={{ color: T.text3 }}>
+                    Tempo médio na carteira
+                  </div>
+                  <div className="mt-2 text-2xl font-semibold" style={{ color: T.text }}>
+                    {avgAge} dias
+                  </div>
+                  <div className="mt-1 text-sm" style={{ color: T.text3 }}>
+                    Média estimada a partir da data de cadastro dos registros filtrados.
+                  </div>
+                </div>
+                <div className="rounded-[22px] border p-4" style={{ borderColor: T.line, background: T.cardSoft }}>
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.12em]" style={{ color: T.text3 }}>
+                    Próximas ações em aberto
+                  </div>
+                  <div className="mt-2 text-2xl font-semibold" style={{ color: T.text }}>
+                    {priorityRows.length}
+                  </div>
+                  <div className="mt-1 text-sm" style={{ color: T.text3 }}>
+                    Casos puxados para a fila prioritária do painel.
                   </div>
                 </div>
               </div>
             </ShellCard>
 
-            <div className="grid gap-4 lg:grid-cols-3">
-              <ShellCard className="p-5" soft>
-                <div className="flex items-center gap-2 text-sm font-semibold" style={{ color: T.text }}>
-                  <CalendarClock className="h-4 w-4" />
-                  Leitura rápida
-                </div>
-                <div className="mt-3 text-sm leading-6" style={{ color: T.text3 }}>
-                  {mostLoadedStage?.count ? `${mostLoadedStage.count} pacientes estão concentrados em ${mostLoadedStage.label.toLowerCase()}.` : "Sem concentração relevante nas etapas atuais."}
-                </div>
-              </ShellCard>
-              <ShellCard className="p-5" soft>
-                <div className="flex items-center gap-2 text-sm font-semibold" style={{ color: T.text }}>
-                  <Receipt className="h-4 w-4" />
-                  Fiscal
-                </div>
-                <div className="mt-3 text-sm leading-6" style={{ color: T.text3 }}>
-                  {fiscalPendingCount} pacientes ainda exigem conclusão da etapa fiscal de nota fiscal.
-                </div>
-              </ShellCard>
-              <ShellCard className="p-5" soft>
-                <div className="flex items-center gap-2 text-sm font-semibold" style={{ color: T.text }}>
-                  <FileText className="h-4 w-4" />
-                  Maturidade da carteira
-                </div>
-                <div className="mt-3 text-sm leading-6" style={{ color: T.text3 }}>
-                  O conjunto filtrado opera com avanço médio de {avgProgress}% no pipeline clínico.
-                </div>
-              </ShellCard>
-            </div>
-          </div>
+            <ShellCard className="p-5 sm:p-6" soft>
+              <SectionTitle icon={UserRound} title="Cadastros mais recentes" hint="Últimos pacientes incluídos no conjunto filtrado." />
+              <div className="mt-4 space-y-3">
+                {recentRows.length ? (
+                  recentRows.map((row) => {
+                    const pct = progressPct(row.etapas, row.exige_nf);
+                    return (
+                      <div
+                        key={row.id}
+                        className="rounded-[22px] border p-4"
+                        style={{ borderColor: T.line, background: T.card }}
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <div className="text-sm font-semibold" style={{ color: T.text }}>
+                              {row.nome_completo}
+                            </div>
+                            <div className="mt-1 text-xs" style={{ color: T.text3 }}>
+                              {brDate(row.created_at)} • {row.cpf}
+                            </div>
+                          </div>
+                          <Badge tone={pct === 100 ? "green" : pct >= 60 ? "blue" : "amber"}>{pct}%</Badge>
+                        </div>
+                        <div className="mt-3">
+                          <ProgressBar value={pct} color={pct === 100 ? "green" : pct >= 60 ? "blue" : "amber"} />
+                        </div>
+                        <div className="mt-2 text-xs" style={{ color: T.text3 }}>
+                          {row.etapa_atual ? STEP_LABEL_BY_KEY[row.etapa_atual] : "Não iniciada"}
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <EmptyState title="Sem cadastros recentes" hint="Não há registros para compor este quadro com os filtros atuais." />
+                )}
+              </div>
+            </ShellCard>
 
-          <div className="2xl:block xl:col-span-2 2xl:col-span-1">
-            <DetailPanel row={selected} />
+            <NotesCard rows={filteredRows} />
           </div>
-        </div>
-
-        <div className="2xl:hidden">
-          <DetailPanel row={selected} />
         </div>
       </div>
     </section>
