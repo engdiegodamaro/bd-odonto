@@ -2,337 +2,190 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   ArrowRight,
-  BadgeCheck,
   CalendarDays,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   Clock3,
-  HeartHandshake,
   Instagram,
   MapPin,
   Menu,
   Phone,
   ShieldCheck,
-  SmilePlus,
   Sparkles,
-  Star,
   Stethoscope,
+  UserRound,
   X,
   type LucideIcon,
 } from "lucide-react";
 
 const INSTAGRAM_URL = "https://www.instagram.com/bd.clinicaodontologicaa/";
 const WHATSAPP_URL =
-  "https://web.whatsapp.com/send/?phone=5511984760850&text&type=phone_number&app_absent=0";
+  "https://wa.me/5511984760850?text=Ol%C3%A1!%20Gostaria%20de%20agendar%20uma%20avalia%C3%A7%C3%A3o%20na%20BD%20Odontologia.";
+const ADDRESS = "Rua Bom Pastor, 2444 - Ipiranga, São Paulo - SP, sala 1403";
+const PHONE_LABEL = "(11) 98476-0850";
 
-type Service = {
+const cx = (...parts: Array<string | false | null | undefined>) => parts.filter(Boolean).join(" ");
+
+type Treatment = {
   id: string;
-  icon: LucideIcon;
-  title: string;
-  short: string;
-  description: string;
-  bullets: string[];
-};
-
-type ContactItem = {
-  icon: LucideIcon;
+  label: string;
   title: string;
   text: string;
-  href?: string;
-  cta?: string;
+  items: string[];
+  icon: LucideIcon;
 };
 
-const services: Service[] = [
+type Photo = {
+  src: string;
+  title: string;
+};
+
+
+type BeforeAfterCase = {
+  title: string;
+  subtitle: string;
+  before: string;
+  after: string;
+};
+
+const navItems = [
+  { href: "#inicio", label: "Início" },
+  { href: "#tratamentos", label: "Tratamentos" },
+  { href: "#profissional", label: "Profissional" },
+  { href: "#consultorio", label: "Consultório" },
+  { href: "#resultados", label: "Resultados" },
+  { href: "#contato", label: "Contato" },
+];
+
+const treatments: Treatment[] = [
   {
-    id: "ortodontia",
-    icon: SmilePlus,
-    title: "Ortodontia",
-    short: "Aparelhos autoligáveis, fixos, estéticos e alinhadores.",
-    description:
-      "Tratamentos completos para alinhamento dental, com opções modernas e personalizadas, como aparelhos autoligáveis, fixos, estéticos e alinhadores.",
-    bullets: [
-      "Aparelhos autoligáveis",
-      "Aparelhos fixos e estéticos",
-      "Alinhadores e planejamento individual",
-    ],
-  },
-  {
-    id: "estetica-dental",
+    id: "estetica",
+    label: "Estética",
+    title: "Sorriso mais leve, harmônico e natural",
+    text: "Planejamento cuidadoso para valorizar seu sorriso com equilíbrio, naturalidade e segurança em cada detalhe.",
+    items: ["Clareamento dental", "Facetas", "Lentes de contato dental", "Harmonização facial"],
     icon: Sparkles,
-    title: "Estética dental",
-    short: "Restaurações com porcelanas e resinas.",
-    description:
-      "Tratamentos restauradores voltados à harmonia do sorriso, com abordagem estética e funcional por meio de porcelanas e resinas.",
-    bullets: [
-      "Porcelanas e resinas",
-      "Harmonia do sorriso",
-      "Estética com naturalidade",
-    ],
   },
   {
-    id: "harmonizacao-facial",
-    icon: HeartHandshake,
-    title: "Harmonização facial",
-    short: "Tratamentos terapêuticos, funcionais e estéticos.",
-    description:
-      "Atuação voltada ao equilíbrio facial e bem-estar, com tratamentos que unem função, estética e abordagem terapêutica.",
-    bullets: [
-      "Equilíbrio facial",
-      "Abordagem funcional",
-      "Estética com planejamento",
-    ],
-  },
-  {
-    id: "implantodontia",
+    id: "reabilitacao",
+    label: "Reabilitação",
+    title: "Mais conforto para falar, sorrir e mastigar",
+    text: "Tratamentos voltados a devolver função, estabilidade e confiança no dia a dia com um plano individualizado.",
+    items: ["Implantes", "Próteses", "Reabilitação oral", "Cirurgia"],
     icon: ShieldCheck,
-    title: "Implantodontia",
-    short: "Reposição dental com função, estética e saúde.",
-    description:
-      "Tratamento indicado para repor a perda parcial ou total dos dentes, restituindo função mastigatória, estética e saúde do sorriso.",
-    bullets: [
-      "Reposição parcial ou total",
-      "Recuperação estética e funcional",
-      "Mais segurança e qualidade de vida",
-    ],
   },
   {
-    id: "protese",
-    icon: BadgeCheck,
-    title: "Prótese",
-    short: "Reposição de um ou mais dentes perdidos.",
-    description:
-      "Uma excelente alternativa para pacientes que desejam repor um ou mais dentes perdidos, com foco em conforto, função e estética.",
-    bullets: [
-      "Reposição dental",
-      "Conforto mastigatório",
-      "Reabilitação estética",
-    ],
-  },
-  {
-    id: "endodontia",
+    id: "saude",
+    label: "Saúde bucal",
+    title: "Prevenção, diagnóstico e cuidado contínuo",
+    text: "Acompanhamento próximo para diferentes necessidades clínicas, com orientação clara durante todo o tratamento.",
+    items: ["Ortodontia", "Canal", "Periodontia", "Radiografias"],
     icon: Stethoscope,
-    title: "Endodontia",
-    short: "Tratamento de canal e cuidado da parte interna do dente.",
-    description:
-      "Especialidade que atua no diagnóstico e tratamento da parte interna do dente, incluindo procedimentos de canal com precisão e cuidado.",
-    bullets: [
-      "Tratamento de canal",
-      "Preservação dental",
-      "Cuidado especializado",
-    ],
   },
   {
-    id: "periodontia",
-    icon: ShieldCheck,
-    title: "Periodontia",
-    short: "Saúde gengival e prevenção bucal.",
-    description:
-      "Prevenção da saúde bucal e tratamento de doenças gengivais, como gengivite e periodontite, com acompanhamento individualizado.",
-    bullets: [
-      "Prevenção gengival",
-      "Tratamento de gengivite",
-      "Controle de periodontite",
-    ],
-  },
-  {
-    id: "cirurgia",
-    icon: CalendarDays,
-    title: "Cirurgia",
-    short: "Diagnóstico, tratamento e extrações indicadas.",
-    description:
-      "Diagnóstico, tratamento e acompanhamento de dentes com indicação de extração, como nos casos de dentes sisos.",
-    bullets: [
-      "Avaliação cirúrgica",
-      "Extrações indicadas",
-      "Acompanhamento clínico",
-    ],
-  },
-  {
-    id: "odontopediatria",
-    icon: SmilePlus,
-    title: "Odontopediatria",
-    short: "Saúde bucal infantil do nascimento à adolescência.",
-    description:
-      "Cuidados voltados à saúde bucal de crianças, desde o nascimento até a adolescência, com acolhimento e abordagem adequada a cada fase.",
-    bullets: [
-      "Atendimento infantil",
-      "Acompanhamento por faixa etária",
-      "Prevenção e orientação",
-    ],
-  },
-  {
-    id: "exames-radiograficos",
-    icon: BadgeCheck,
-    title: "Exames radiográficos",
-    short: "Exames de suporte ao diagnóstico e avaliação clínica.",
-    description:
-      "Exames e avaliações de suporte ao diagnóstico, com foco na saúde bucal e no atendimento individual de cada paciente.",
-    bullets: [
-      "Suporte ao diagnóstico",
-      "Avaliação individual",
-      "Mais precisão clínica",
-    ],
-  },
-  {
-    id: "dtm-dor-orofacial",
-    icon: HeartHandshake,
-    title: "DTM e dor orofacial",
-    short: "Cuidado para dor e desconforto com foco em qualidade de vida.",
-    description:
-      "Atendimento voltado ao cuidado da dor e do desconforto orofacial, ajudando a melhorar bem-estar, função e qualidade de vida.",
-    bullets: [
-      "Avaliação da dor orofacial",
-      "Cuidado funcional",
-      "Foco em qualidade de vida",
-    ],
+    id: "familia",
+    label: "Família",
+    title: "Atendimento acolhedor em cada fase da vida",
+    text: "Cuidado para crianças, adultos e famílias com atenção individual, escuta e uma experiência mais tranquila.",
+    items: ["Odontopediatria", "Avaliação preventiva", "DTM e dor orofacial"],
+    icon: UserRound,
   },
 ];
 
-const pillars = [
+const officePhotos: Photo[] = [
+  { src: "/consultorio-1.png", title: "Recepção" },
+  { src: "/consultorio-2.png", title: "Consultório" },
+  { src: "/consultorio-3.png", title: "Detalhes do espaço" },
+  { src: "/consultorio-4.png", title: "Ambiente da clínica" },
+];
+
+const highlights = [
+  "Atendimento com horário agendado",
+  "Planejamento individualizado",
+  "Orientação clara em cada etapa",
+];
+
+
+const beforeAfterCases: BeforeAfterCase[] = [
   {
-    icon: ShieldCheck,
-    title: "Excelência clínica",
-    text: "Atendimento com alto padrão técnico, planejamento cuidadoso e foco na segurança em cada etapa.",
+    title: "Clareamento dental",
+    subtitle: "Evolução com mais luminosidade e naturalidade no sorriso.",
+    before: "/antes-1.png",
+    after: "/depois-1.png",
   },
   {
-    icon: Sparkles,
-    title: "Estética com naturalidade",
-    text: "Resultados elegantes e harmoniosos, respeitando a individualidade de cada sorriso.",
+    title: "Reabilitação estética",
+    subtitle: "Melhora da harmonia do sorriso com planejamento individualizado.",
+    before: "/antes-2.png",
+    after: "/depois-2.png",
   },
   {
-    icon: HeartHandshake,
-    title: "Cuidado humanizado",
-    text: "Uma experiência acolhedora, próxima e transparente do primeiro contato ao pós-tratamento.",
+    title: "Alinhamento dental",
+    subtitle: "Acompanhamento do tratamento com foco em função e estética.",
+    before: "/antes-4.png",
+    after: "/depois-4.png",
+  },
+  {
+    title: "Lentes ou facetas",
+    subtitle: "Resultado planejado para valorizar o sorriso com equilíbrio.",
+    before: "/antes-3.png",
+    after: "/depois-3.png",
   },
 ];
 
-const stats = [
-  { label: "Especialidades", value: "11" },
-  { label: "Atendimento", value: "Humanizado" },
-  { label: "Agendamento", value: "WhatsApp" },
+const reasons = [
+  {
+    title: "Escuta e atenção",
+    text: "Cada atendimento é conduzido com acolhimento, clareza e foco real na necessidade do paciente.",
+  },
+  {
+    title: "Tratamento planejado",
+    text: "A clínica une saúde, função e estética para construir um cuidado mais seguro e consistente.",
+  },
+  {
+    title: "Experiência mais tranquila",
+    text: "Ambiente agradável, atendimento próximo e um processo pensado para transmitir confiança.",
+  },
 ];
 
 const steps = [
-  {
-    number: "01",
-    title: "Primeiro contato",
-    text: "O paciente conhece a clínica, esclarece dúvidas e agenda sua avaliação com praticidade.",
-  },
-  {
-    number: "02",
-    title: "Avaliação individualizada",
-    text: "Cada caso é analisado com cuidado para definir um plano de tratamento claro e seguro.",
-  },
-  {
-    number: "03",
-    title: "Planejamento do tratamento",
-    text: "As decisões clínicas priorizam saúde, função, conforto e estética, conforme a necessidade do paciente.",
-  },
-  {
-    number: "04",
-    title: "Acompanhamento próximo",
-    text: "O paciente é acompanhado em todas as etapas, com orientação transparente e experiência acolhedora.",
-  },
-];
-
-const testimonials = [
-  {
-    name: "Atendimento acolhedor",
-    role: "Experiência do paciente",
-    text: "O atendimento transmite segurança, acolhimento e atenção genuína às necessidades de cada paciente.",
-  },
-  {
-    name: "Confiança no cuidado",
-    role: "Experiência clínica",
-    text: "A clínica une conhecimento técnico e proximidade, fazendo o paciente se sentir bem cuidado em todas as etapas.",
-  },
-  {
-    name: "Contato facilitado",
-    role: "Agendamento",
-    text: "O processo de contato e agendamento é simples, direto e pensado para facilitar a vida do paciente.",
-  },
+  { title: "Conversa inicial", text: "Entendimento da sua necessidade e orientação sobre o melhor caminho." },
+  { title: "Avaliação detalhada", text: "Análise cuidadosa para definir prioridades, possibilidades e etapas do tratamento." },
+  { title: "Planejamento", text: "Proposta individualizada, explicada com clareza e focada no seu objetivo." },
+  { title: "Acompanhamento", text: "Suporte durante o tratamento para que você se sinta seguro em cada fase." },
 ];
 
 const faqs = [
   {
-    q: "Quais tratamentos a clínica oferece?",
-    a: "A BD Odontologia conta com ortodontia, estética dental, harmonização facial, implantodontia, prótese, endodontia, periodontia, cirurgia, odontopediatria, exames radiográficos e atendimento para DTM e dor orofacial.",
+    q: "Quais tratamentos a BD Odontologia oferece?",
+    a: "A clínica oferece ortodontia, estética dental, harmonização facial, implantodontia, prótese, endodontia, periodontia, cirurgia, odontopediatria, exames radiográficos e atendimento para DTM e dor orofacial.",
+  },
+  {
+    q: "Como posso agendar uma avaliação?",
+    a: "O agendamento pode ser feito diretamente pelo WhatsApp da clínica, de forma prática e rápida.",
+  },
+  {
+    q: "A clínica atende casos de saúde e também estética?",
+    a: "Sim. A BD Odontologia trabalha com uma abordagem completa, unindo prevenção, reabilitação, função e estética conforme a necessidade de cada paciente.",
   },
   {
     q: "Onde a clínica está localizada?",
-    a: "A clínica está localizada na Rua Bom Pastor, 2444 - Ipiranga, São Paulo - SP, 04203002 - 1403.",
-  },
-  {
-    q: "Como funciona o agendamento?",
-    a: "O agendamento pode ser iniciado diretamente pelo WhatsApp da clínica, com atendimento rápido e acolhedor.",
-  },
-  {
-    q: "A rota /acesso continua disponível?",
-    a: "Sim. O acesso continua disponível normalmente no cabeçalho e no rodapé da página.",
+    a: `A clínica está em ${ADDRESS}.`,
   },
 ];
 
-const contactItems: ContactItem[] = [
-  {
-    icon: MapPin,
-    title: "Endereço da clínica",
-    text: "Rua Bom Pastor, 2444 - Ipiranga, São Paulo - SP, 04203002 - 1403",
-  },
-  {
-    icon: Phone,
-    title: "Agendamento por WhatsApp",
-    text: "Fale com a clínica pelo WhatsApp para agendar sua avaliação de forma rápida e acolhedora.",
-    href: WHATSAPP_URL,
-    cta: "Abrir WhatsApp",
-  },
-  {
-    icon: Instagram,
-    title: "Instagram oficial",
-    text: "@bd.clinicaodontologicaa",
-    href: INSTAGRAM_URL,
-    cta: "Ver Instagram",
-  },
-  {
-    icon: Clock3,
-    title: "Horário de atendimento",
-    text: "Defina aqui os dias e horários de funcionamento da clínica.",
-  },
-];
-
-function SectionTitle({
-  eyebrow,
-  title,
-  description,
-}: {
-  eyebrow: string;
-  title: string;
-  description: string;
-}) {
-  return (
-    <div className="max-w-3xl">
-      <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[#8B9298]">
-        {eyebrow}
-      </p>
-      <h2 className="mt-4 text-3xl leading-tight text-[#2F3437] md:text-5xl">
-        {title}
-      </h2>
-      <p className="mt-5 text-base leading-8 text-[#5B646C] md:text-lg">
-        {description}
-      </p>
-    </div>
-  );
-}
-
-function ExternalButton({
+function ExternalAnchor({
   href,
-  children,
   className,
+  children,
 }: {
   href: string;
-  children: React.ReactNode;
   className: string;
+  children: ReactNode;
 }) {
   return (
     <a href={href} target="_blank" rel="noreferrer" className={className}>
@@ -341,73 +194,137 @@ function ExternalButton({
   );
 }
 
-export default function SiteClinicaProfissional() {
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [activeService, setActiveService] = useState<string>(services[0].id);
-  const [openFaq, setOpenFaq] = useState<number>(0);
+function Card({ className, children }: { className?: string; children: ReactNode }) {
+  return (
+    <div
+      className={cx(
+        "rounded-[28px] border border-[#E8DDD4] bg-white shadow-[0_16px_44px_rgba(82,59,45,0.06)]",
+        className,
+      )}
+    >
+      {children}
+    </div>
+  );
+}
 
-  const selectedService = useMemo(() => {
-    return services.find((service) => service.id === activeService) ?? services[0];
-  }, [activeService]);
+function SectionHeader({
+  overline,
+  title,
+  description,
+}: {
+  overline: string;
+  title: string;
+  description: string;
+}) {
+  return (
+    <div className="max-w-2xl">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#8B7C72] sm:text-xs">{overline}</p>
+      <h2 className="mt-4 text-3xl leading-tight text-[#2D2825] sm:text-4xl">{title}</h2>
+      <p className="mt-4 text-sm leading-7 text-[#6A605A] sm:text-base">{description}</p>
+    </div>
+  );
+}
+
+export default function BDOdontologiaPage() {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [activeTreatment, setActiveTreatment] = useState(treatments[0].id);
+  const [activePhoto, setActivePhoto] = useState(0);
+  const [openFaq, setOpenFaq] = useState<number | null>(0);
+
+  useEffect(() => {
+    document.documentElement.style.scrollBehavior = "smooth";
+    const prevHtmlOverflow = document.documentElement.style.overflowY;
+    const prevBodyOverflow = document.body.style.overflowY;
+
+    document.documentElement.style.overflowY = "auto";
+    document.body.style.overflowY = "auto";
+
+    return () => {
+      document.documentElement.style.overflowY = prevHtmlOverflow;
+      document.body.style.overflowY = prevBodyOverflow;
+    };
+  }, []);
+
+  const selectedTreatment = useMemo(
+    () => treatments.find((item) => item.id === activeTreatment) ?? treatments[0],
+    [activeTreatment],
+  );
+
+  const currentPhoto = officePhotos[activePhoto] ?? officePhotos[0];
+
+  const prevPhoto = () => setActivePhoto((value) => (value - 1 + officePhotos.length) % officePhotos.length);
+  const nextPhoto = () => setActivePhoto((value) => (value + 1) % officePhotos.length);
 
   return (
-    <main className="h-screen overflow-y-auto overflow-x-hidden bg-[#F7F5F3] text-[#2F3437] scroll-smooth">
+    <main className="min-h-screen overflow-x-hidden bg-[#F8F4F0] text-[#2D2825]">
       <div
-        className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[720px]"
+        className="pointer-events-none fixed inset-x-0 top-0 -z-10 h-[420px]"
         style={{
           background:
-            "radial-gradient(circle at top left, rgba(201,150,44,0.18), transparent 32%), radial-gradient(circle at top right, rgba(180,141,109,0.18), transparent 28%), linear-gradient(180deg, rgba(233,220,209,0.45) 0%, rgba(250,245,241,0) 72%)",
+            "radial-gradient(circle at top left, rgba(186,163,145,0.20), transparent 32%), linear-gradient(180deg, rgba(248,244,240,0.96) 0%, rgba(248,244,240,0.78) 54%, rgba(248,244,240,0) 100%)",
         }}
       />
 
-      <header className="sticky top-0 z-50 border-b border-[#E6D6CB]/80 bg-[#F7F5F3]/85 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 lg:px-8">
+      <div className="border-b border-[#EAE0D8] bg-white/80 backdrop-blur-lg">
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-2.5 text-xs text-[#73685F] sm:px-6 lg:px-8">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
+            <span className="inline-flex items-center gap-1.5">
+              <MapPin className="h-3.5 w-3.5 text-[#BAA391]" />
+              {ADDRESS}
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <Clock3 className="h-3.5 w-3.5 text-[#BAA391]" />
+              Atendimento com horário agendado
+            </span>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <ExternalAnchor href={INSTAGRAM_URL} className="inline-flex items-center gap-1.5 transition hover:text-[#A18B7B]">
+              <Instagram className="h-3.5 w-3.5 text-[#BAA391]" />
+              Instagram
+            </ExternalAnchor>
+            <ExternalAnchor href={WHATSAPP_URL} className="inline-flex items-center gap-1.5 transition hover:text-[#A18B7B]">
+              <Phone className="h-3.5 w-3.5 text-[#BAA391]" />
+              {PHONE_LABEL}
+            </ExternalAnchor>
+          </div>
+        </div>
+      </div>
+
+      <header className="sticky top-0 z-40 border-b border-[#EAE0D8] bg-[#F8F4F0]/88 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
           <Link href="#inicio" className="flex min-w-0 items-center gap-3">
-            <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-full border border-[#DEC9BA] bg-white shadow-sm">
+            <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-full border border-[#E3D6CC] bg-white">
               <Image src="/logo2.png" alt="Logo BD Odontologia" fill className="object-cover" />
             </div>
-            <div className="min-w-0">
-              <p className="truncate text-[11px] font-semibold uppercase tracking-[0.22em] text-[#8B9298] sm:text-xs">
-                BD Odontologia
-              </p>
-              <p className="truncate text-xs text-[#7A6458] sm:text-sm">
-                Clínica odontológica especializada
-              </p>
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#5E534D] sm:text-xs">BD Odontologia</p>
+              <p className="text-xs text-[#86786E] sm:text-sm">Atendimento odontológico</p>
             </div>
           </Link>
 
-          <nav className="hidden items-center gap-8 text-sm text-[#68544A] lg:flex">
-            <Link href="#sobre" className="transition hover:text-[#BAA391]">
-              Sobre
-            </Link>
-            <Link href="#tratamentos" className="transition hover:text-[#BAA391]">
-              Tratamentos
-            </Link>
-            <Link href="#jornada" className="transition hover:text-[#BAA391]">
-              Jornada
-            </Link>
-            <Link href="#faq" className="transition hover:text-[#BAA391]">
-              Dúvidas
-            </Link>
-            <Link href="#contato" className="transition hover:text-[#BAA391]">
-              Contato
-            </Link>
+          <nav className="hidden items-center gap-7 text-sm text-[#5D514A] lg:flex">
+            {navItems.map((item) => (
+              <Link key={item.href} href={item.href} className="transition hover:text-[#A18B7B]">
+                {item.label}
+              </Link>
+            ))}
           </nav>
 
           <div className="hidden items-center gap-3 lg:flex">
             <Link
               href="/acesso"
-              className="inline-flex items-center rounded-full border border-[#D8C1B1] bg-white px-4 py-2.5 text-sm font-medium text-[#5D483F] transition hover:bg-[#F7F5F3]"
+              className="inline-flex items-center rounded-full border border-[#DECFC4] bg-white px-4 py-2.5 text-sm font-medium text-[#5A4E47] transition hover:bg-[#FBF8F5]"
             >
               Área de acesso
             </Link>
-            <ExternalButton
+            <ExternalAnchor
               href={WHATSAPP_URL}
-              className="inline-flex items-center gap-2 rounded-full bg-[#BAA391] px-5 py-2.5 text-sm font-medium text-white shadow-[0_14px_32px_rgba(166,110,0,0.20)] transition hover:-translate-y-0.5 hover:bg-[#A28D7D]"
+              className="inline-flex items-center gap-2 rounded-full bg-[#BAA391] px-5 py-2.5 text-sm font-medium text-white shadow-[0_12px_28px_rgba(91,70,56,0.18)] transition hover:-translate-y-0.5 hover:bg-[#A28D7D]"
             >
               Agendar avaliação
               <ArrowRight className="h-4 w-4" />
-            </ExternalButton>
+            </ExternalAnchor>
           </div>
 
           <button
@@ -421,22 +338,16 @@ export default function SiteClinicaProfissional() {
         </div>
 
         {menuOpen && (
-          <div className="border-t border-[#E7D9CF] bg-[#F7F5F3] lg:hidden">
+          <div className="border-t border-[#E7D9CF] bg-[#F8F4F0] lg:hidden">
             <div className="mx-auto flex max-w-7xl flex-col gap-2 px-5 py-4">
-              {[
-                ["#sobre", "Sobre"],
-                ["#tratamentos", "Tratamentos"],
-                ["#jornada", "Jornada"],
-                ["#faq", "Dúvidas"],
-                ["#contato", "Contato"],
-              ].map(([href, label]) => (
+              {navItems.map((item) => (
                 <Link
-                  key={href}
-                  href={href}
+                  key={item.href}
+                  href={item.href}
                   className="rounded-2xl px-4 py-3 text-sm font-medium text-[#5C483E] transition hover:bg-white"
                   onClick={() => setMenuOpen(false)}
                 >
-                  {label}
+                  {item.label}
                 </Link>
               ))}
               <div className="mt-2 grid gap-2 sm:grid-cols-2">
@@ -447,543 +358,388 @@ export default function SiteClinicaProfissional() {
                 >
                   Área de acesso
                 </Link>
-                <ExternalButton
-                  href={WHATSAPP_URL}
-                  className="rounded-2xl bg-[#BAA391] px-4 py-3 text-center text-sm font-medium text-white"
-                >
+                <ExternalAnchor href={WHATSAPP_URL} className="rounded-2xl bg-[#BAA391] px-4 py-3 text-center text-sm font-medium text-white">
                   Agendar avaliação
-                </ExternalButton>
+                </ExternalAnchor>
               </div>
             </div>
           </div>
         )}
       </header>
 
-      <section id="inicio" className="relative mx-auto max-w-7xl px-5 pb-16 pt-12 sm:pb-20 lg:px-8 lg:pb-24 lg:pt-20">
-        <div className="grid items-center gap-10 lg:grid-cols-[1.05fr_0.95fr] xl:gap-14">
+      <section id="inicio" className="mx-auto max-w-7xl px-4 pb-14 pt-10 sm:px-6 sm:pb-20 lg:px-8 lg:pt-16">
+        <div className="grid items-center gap-8 lg:grid-cols-[1.04fr_0.96fr] xl:gap-14">
           <div>
-            <div className="inline-flex items-center gap-2 rounded-full border border-[#E4D3C8] bg-white/90 px-4 py-2 text-sm text-[#8B9298] shadow-sm">
-              <Sparkles className="h-4 w-4 text-[#BAA391]" />
-              Cuidado odontológico com excelência, acolhimento e confiança
+            <div className="inline-flex items-center gap-2 rounded-full border border-[#E4D8CE] bg-white px-4 py-2 text-sm text-[#786B64] shadow-sm">
+              <CalendarDays className="h-4 w-4 text-[#BAA391]" />
+              Avaliação com horário agendado
             </div>
 
-            <h1 className="mt-6 max-w-4xl text-4xl leading-[1.02] text-[#2F3437] sm:text-5xl lg:text-7xl">
-              Sorrisos mais saudáveis, funcionais e bonitos com a BD Odontologia.
+            <h1 className="mt-6 max-w-4xl text-4xl leading-[1.02] text-[#2D2825] sm:text-5xl lg:text-6xl">
+              Cuidado odontológico com atenção aos detalhes, conforto e confiança em cada etapa.
             </h1>
 
-            <p className="mt-6 max-w-2xl text-base leading-8 text-[#5B646C] md:text-lg">
-              Na BD Odontologia, cada atendimento é conduzido com atenção aos detalhes, escuta cuidadosa e foco em saúde, função e estética, para que cada paciente tenha uma experiência segura, acolhedora e personalizada.
+            <p className="mt-5 max-w-2xl text-base leading-8 text-[#6A605A] md:text-lg">
+              Na BD Odontologia, cada tratamento é conduzido com escuta, planejamento individualizado e uma experiência pensada para que você se sinta seguro do início ao fim.
             </p>
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-              <ExternalButton
+              <ExternalAnchor
                 href={WHATSAPP_URL}
-                className="inline-flex items-center justify-center gap-2 rounded-full bg-[#BAA391] px-6 py-3.5 text-sm font-medium text-white shadow-[0_20px_40px_rgba(166,110,0,0.18)] transition hover:-translate-y-0.5 hover:bg-[#A28D7D]"
+                className="inline-flex items-center justify-center gap-2 rounded-full bg-[#BAA391] px-6 py-3.5 text-sm font-medium text-white shadow-[0_18px_38px_rgba(91,70,56,0.18)] transition hover:-translate-y-0.5 hover:bg-[#A28D7D]"
               >
-                Solicitar avaliação
+                Agendar avaliação
                 <ArrowRight className="h-4 w-4" />
-              </ExternalButton>
+              </ExternalAnchor>
               <Link
                 href="#tratamentos"
-                className="inline-flex items-center justify-center gap-2 rounded-full border border-[#DBC7B9] bg-white px-6 py-3.5 text-sm font-medium text-[#5B646C] transition hover:bg-[#F7F5F3]"
+                className="inline-flex items-center justify-center gap-2 rounded-full border border-[#DBCFC6] bg-white px-6 py-3.5 text-sm font-medium text-[#5B514B] transition hover:bg-[#FCFAF8]"
               >
                 Ver tratamentos
               </Link>
-              <Link
-                href="/acesso"
-                className="inline-flex items-center justify-center gap-2 rounded-full px-2 py-3.5 text-sm font-medium text-[#8B9298] transition hover:text-[#BAA391]"
-              >
-                Ir para /acesso
-              </Link>
             </div>
 
-            <div className="mt-10 grid gap-4 sm:grid-cols-3">
-              {stats.map((item) => (
-                <div
-                  key={item.label}
-                  className="rounded-[28px] border border-[#E7D8CF] bg-white/85 p-5 shadow-sm"
+            {/* <div className="mt-8 flex flex-wrap gap-2.5">
+              {highlights.map((item) => (
+                <span
+                  key={item}
+                  className="inline-flex items-center rounded-full border border-[#E7DBD2] bg-white px-4 py-2 text-sm text-[#6D625B]"
                 >
-                  <p className="text-2xl font-semibold text-[#2F3437]">{item.value}</p>
-                  <p className="mt-2 text-sm leading-6 text-[#736056]">{item.label}</p>
-                </div>
+                  {item}
+                </span>
               ))}
-            </div>
+            </div> */}
           </div>
 
           <div className="relative">
-            <div className="absolute -left-8 -top-8 h-32 w-32 rounded-full bg-[#D8CEC7]/30 blur-3xl" />
-            <div className="absolute -bottom-8 -right-8 h-40 w-40 rounded-full bg-[#D8CEC7]/30 blur-3xl" />
+            <div className="absolute -left-4 top-8 hidden h-28 w-28 rounded-full bg-[#D8CCC3]/45 blur-3xl sm:block" />
+            <Card className="overflow-hidden border-[#E5D7CC] bg-[linear-gradient(180deg,#FFFFFF_0%,#FBF6F1_100%)] p-3 sm:p-4">
+              <div className="relative overflow-hidden rounded-[24px] bg-[#EFE6DF]">
+                <div className="absolute left-4 top-4 z-10 rounded-full bg-white/92 px-4 py-2 text-xs font-medium text-[#5B5049] shadow-sm">
+                  Atendimento acolhedor e planejamento cuidadoso
+                </div>
+                <div className="relative aspect-[4/4.35] sm:aspect-[4/4.6]">
+                  <Image src="/consultorio-1.png" alt="Ambiente da BD Odontologia" fill className="object-cover" priority />
+                </div>
+              </div>
+              {/* <div className="grid gap-3 p-2 pt-4 sm:grid-cols-3">
+                {reasons.map((item) => (
+                  <div key={item.title} className="rounded-[22px] bg-[#FBF8F5] p-4">
+                    <p className="text-sm font-semibold text-[#2D2825]">{item.title}</p>
+                    <p className="mt-2 text-sm leading-6 text-[#6E645E]">{item.text}</p>
+                  </div>
+                ))}
+              </div> */}
+            </Card>
+          </div>
+        </div>
+      </section>
 
-            <div className="relative overflow-hidden rounded-[34px] border border-[#E4D2C6] bg-white shadow-[0_28px_70px_rgba(85,61,49,0.12)]">
-              <div className="border-b border-[#EEE0D7] bg-[#F7F5F3] p-6 sm:p-7">
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[#8B9298]">
-                      BD Odontologia
-                    </p>
-                    <h2 className="mt-3 text-2xl text-[#2F3437] sm:text-3xl">
-                      Excelência em cada sorriso
-                    </h2>
+      <section id="tratamentos" className="mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-20 lg:px-8">
+        <div className="grid gap-8 lg:grid-cols-[0.92fr_1.08fr] lg:items-start">
+          <SectionHeader
+            overline="Tratamentos"
+            title="Cuidado completo para saúde, função e estética do sorriso"
+            description="As especialidades são organizadas para facilitar sua escolha e mostrar, com clareza, como a clínica pode cuidar do que você precisa neste momento."
+          />
+
+          <Card className="p-4 sm:p-6">
+            <div className="flex flex-wrap gap-2.5">
+              {treatments.map((item) => {
+                const Icon = item.icon;
+                const isActive = item.id === selectedTreatment.id;
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => setActiveTreatment(item.id)}
+                    className={cx(
+                      "inline-flex items-center gap-2 rounded-full border px-4 py-2.5 text-sm font-medium transition",
+                      isActive
+                        ? "border-[#BAA391] bg-[#EDE2D9] text-[#5A4A40] shadow-[0_16px_34px_rgba(126,98,79,0.10)]"
+                        : "border-[#E6D9D0] bg-[#FCFAF8] text-[#5D524B] hover:bg-white",
+                    )}
+                  >
+                    <Icon className="h-4 w-4" />
+                    {item.label}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="mt-6 grid gap-6 rounded-[24px] bg-[#FBF8F5] p-5 sm:p-6 lg:grid-cols-[0.95fr_1.05fr]">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[#8B7C72]">{selectedTreatment.label}</p>
+                <h3 className="mt-3 text-2xl leading-tight text-[#2D2825] sm:text-[30px]">{selectedTreatment.title}</h3>
+                <p className="mt-4 text-sm leading-7 text-[#6B615B] sm:text-base">{selectedTreatment.text}</p>
+                <ExternalAnchor
+                  href={WHATSAPP_URL}
+                  className="mt-5 inline-flex items-center gap-2 rounded-full border border-[#DCCEC4] bg-white px-4 py-2.5 text-sm font-medium text-[#5B5049] transition hover:bg-[#F5F0EB]"
+                >
+                  Solicitar avaliação
+                  <ArrowRight className="h-4 w-4" />
+                </ExternalAnchor>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                {selectedTreatment.items.map((item) => (
+                  <div key={item} className="rounded-[20px] border border-[#E8DDD4] bg-white px-4 py-4 text-sm font-medium text-[#3D342F]">
+                    {item}
                   </div>
-                  <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-full border border-[#E6D7CD] bg-white">
-                    <Image src="/logo2.png" alt="Logo da clínica" fill className="object-cover" />
-                  </div>
+                ))}
+              </div>
+            </div>
+          </Card>
+        </div>
+      </section>
+
+      <section id="profissional" className="mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-20 lg:px-8">
+        <Card className="overflow-hidden">
+          <div className="grid gap-0 lg:grid-cols-[0.88fr_1.12fr]">
+            <div className="relative min-h-[360px] bg-[#EDE3DB]">
+              <Image src="/dra-bruna.png" alt="Dra. Bruna" fill className="object-cover" />
+            </div>
+
+            <div className="p-6 sm:p-8 lg:p-10">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#8B7C72] sm:text-xs">Profissional</p>
+              <h2 className="mt-4 text-3xl leading-tight text-[#2D2825] sm:text-4xl">Atendimento próximo, cuidadoso e focado em transmitir confiança</h2>
+              <p className="mt-5 text-sm leading-8 text-[#6A605A] sm:text-base">
+                A BD Odontologia valoriza uma abordagem humana, clara e individualizada. Cada paciente é recebido com atenção às necessidades clínicas, aos objetivos do tratamento e à experiência durante o cuidado.
+              </p>
+
+              <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                <div className="rounded-[22px] bg-[#FBF8F5] p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#8B7C72]">Formação</p>
+                  <p className="mt-2 text-sm leading-6 text-[#5F544E]">Especialista em Próteses, Facetas e Lentes de contato</p>
+                </div>
+                <div className="rounded-[22px] bg-[#FBF8F5] p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#8B7C72]">CRO-SP</p>
+                  <p className="mt-2 text-sm leading-6 text-[#5F544E]">CRO-SP 134865</p>
                 </div>
               </div>
 
-              <div className="p-6 sm:p-7">
-                <div className="rounded-[28px] bg-[linear-gradient(135deg,#D8CEC7_0%,#D8CEC7_100%)] p-6 text-white">
-                  <div className="grid items-center gap-6 md:grid-cols-[0.8fr_1.2fr]">
-                    <div className="relative mx-auto h-28 w-28 md:h-32 md:w-32">
-                      <Image src="/logo2.png" alt="Símbolo da marca" fill className="object-contain" />
-                    </div>
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-[0.28em] text-white/75">
-                        Atendimento especializado
-                      </p>
-                      <h3 className="mt-3 text-2xl leading-tight sm:text-3xl">
-                        Tratamentos pensados para cuidar do seu sorriso com segurança e naturalidade.
-                      </h3>
-                      <p className="mt-3 text-sm leading-7 text-white/90">
-                        A clínica une conhecimento técnico, atendimento humanizado e planejamento individualizado para oferecer tratamentos odontológicos completos, com foco em bem-estar, funcionalidade e estética do sorriso.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-6 grid gap-4 sm:grid-cols-2">
-                  {[
-                    "Atendimento acolhedor e humanizado",
-                    "Avaliação cuidadosa e individual",
-                    "Especialidades para diferentes necessidades",
-                    "Agendamento facilitado por WhatsApp",
-                  ].map((item) => (
-                    <div
-                      key={item}
-                      className="flex items-center gap-3 rounded-2xl border border-[#E9DCD3] bg-[#FFFDFC] px-4 py-3 text-sm text-[#655146]"
-                    >
-                      <BadgeCheck className="h-4 w-4 shrink-0 text-[#BAA391]" />
-                      <span>{item}</span>
-                    </div>
-                  ))}
-                </div>
+              <div className="mt-6 rounded-[22px] border border-[#E7DBD2] bg-white p-4 sm:p-5">
+                <p className="text-sm leading-7 text-[#5B514B]">
+                  Uma odontologia que une saúde, estética e planejamento com orientação clara em cada fase do tratamento.
+                </p>
               </div>
             </div>
           </div>
-        </div>
+        </Card>
       </section>
 
-      <section className="border-y border-[#E8D9CE] bg-white/70">
-        <div className="mx-auto grid max-w-7xl gap-6 px-5 py-8 lg:grid-cols-3 lg:px-8">
-          {pillars.map((item) => {
-            const Icon = item.icon;
-            return (
-              <article
-                key={item.title}
-                className="rounded-[28px] border border-[#EADDD4] bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-[0_16px_36px_rgba(90,67,55,0.08)]"
-              >
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#F7F5F3] text-[#BAA391]">
-                  <Icon className="h-5 w-5" />
+      <section id="consultorio" className="mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-20 lg:px-8">
+        <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
+          <SectionHeader
+            overline="Consultório"
+            title="Um ambiente acolhedor, organizado e pensado para uma experiência tranquila"
+            description="Como as fotos do consultório são em formato retrato, reorganizei a galeria para valorizar melhor cada imagem, sem corte ruim e com navegação mais elegante."
+          />
+
+          <Card className="overflow-hidden border-[#E5D7CC] bg-[linear-gradient(180deg,#FFFFFF_0%,#FBF6F1_100%)] p-4 sm:p-5">
+            <div className="grid gap-4 lg:grid-cols-[1fr_112px] lg:items-stretch">
+              <div className="relative overflow-hidden rounded-[24px] bg-[#EFE6DF]">
+                <div className="relative mx-auto w-full max-w-[520px] aspect-[4/5] sm:max-w-[580px]">
+                  <Image src={currentPhoto.src} alt={currentPhoto.title} fill className="object-cover" />
                 </div>
-                <h3 className="mt-4 text-2xl text-[#2F3437]">{item.title}</h3>
-                <p className="mt-3 text-sm leading-7 text-[#5B646C]">{item.text}</p>
-              </article>
-            );
-          })}
+
+                <div className="absolute inset-x-0 bottom-0 flex items-center justify-between bg-gradient-to-t from-black/55 to-transparent p-4 text-white sm:p-5">
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.24em] text-white/75">Consultório</p>
+                    <p className="mt-1 text-lg font-medium">{currentPhoto.title}</p>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={prevPhoto}
+                      className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/18 backdrop-blur transition hover:bg-white/28"
+                      aria-label="Foto anterior"
+                    >
+                      <ChevronLeft className="h-5 w-5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={nextPhoto}
+                      className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/18 backdrop-blur transition hover:bg-white/28"
+                      aria-label="Próxima foto"
+                    >
+                      <ChevronRight className="h-5 w-5" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-4 gap-3 lg:grid-cols-1">
+                {officePhotos.map((photo, index) => (
+                  <button
+                    key={photo.src}
+                    type="button"
+                    onClick={() => setActivePhoto(index)}
+                    className={cx(
+                      "group relative overflow-hidden rounded-[18px] border bg-[#F5EEE8] transition",
+                      index === activePhoto
+                        ? "border-[#BAA391] ring-2 ring-[#E8DDD4]"
+                        : "border-[#E7DBD2] hover:border-[#D4C3B7]",
+                    )}
+                    aria-label={photo.title}
+                  >
+                    <div className="relative aspect-[3/4]">
+                      <Image src={photo.src} alt={photo.title} fill className="object-cover transition duration-300 group-hover:scale-[1.03]" />
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </Card>
         </div>
       </section>
 
-      <section id="sobre" className="mx-auto max-w-7xl px-5 py-16 sm:py-20 lg:px-8">
-        <div className="grid gap-8 lg:grid-cols-[0.92fr_1.08fr] xl:gap-12">
-          <div className="rounded-[34px] border border-[#E6D8CE] bg-white p-7 shadow-sm md:p-8">
-            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[#8B9298]">
-              Sobre a clínica
-            </p>
-            <h2 className="mt-4 text-3xl leading-tight text-[#2F3437] md:text-5xl">
-              Um atendimento odontológico completo, humano e especializado.
-            </h2>
-            <p className="mt-5 text-base leading-8 text-[#5B646C]">
-              A BD Odontologia oferece um cuidado próximo e individualizado, com tratamentos voltados à prevenção, reabilitação, função e estética. Cada plano é conduzido com responsabilidade clínica, clareza e atenção às necessidades de cada paciente.
-            </p>
-            <p className="mt-4 text-base leading-8 text-[#5B646C]">
-              Com uma abordagem que une técnica, acolhimento e planejamento, a clínica busca proporcionar uma experiência segura e confortável em todas as etapas, desde a avaliação inicial até o acompanhamento do tratamento.
-            </p>
-          </div>
 
-          <div className="grid gap-6 md:grid-cols-2">
-            {[
-              {
-                title: "Atendimento individualizado",
-                text: "Cada paciente é atendido de forma única, com escuta cuidadosa e um plano de tratamento pensado para sua necessidade.",
-              },
-              {
-                title: "Cuidado humanizado",
-                text: "A clínica prioriza acolhimento, transparência e conforto para que cada consulta aconteça com tranquilidade e confiança.",
-              },
-              {
-                title: "Tratamentos completos",
-                text: "A BD Odontologia reúne especialidades que atendem diferentes necessidades clínicas, funcionais e estéticas em um só lugar.",
-              },
-              {
-                title: "Confiança e segurança",
-                text: "Os tratamentos são conduzidos com responsabilidade, planejamento e foco em resultados consistentes para a saúde bucal.",
-              },
-            ].map((card) => (
-              <article
-                key={card.title}
-                className="rounded-[28px] border border-[#E7D8CF] bg-[#F7F5F3] p-7 transition hover:bg-white"
-              >
-                <div className="h-1.5 w-14 rounded-full bg-[#BAA391]" />
-                <h3 className="mt-5 text-2xl text-[#2F3437]">{card.title}</h3>
-                <p className="mt-3 text-sm leading-7 text-[#5B646C]">{card.text}</p>
-              </article>
+      <section id="resultados" className="mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-20 lg:px-8">
+        <div className="grid gap-8">
+          <SectionHeader
+            overline="Resultados"
+            title="Resultados que ajudam a visualizar a evolução do tratamento"
+            description=""
+          />
+
+          <div className="grid gap-5 md:grid-cols-2">
+            {beforeAfterCases.map((item) => (
+              <Card key={item.title} className="overflow-hidden p-4 sm:p-5">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-lg font-semibold text-[#2D2825]">{item.title}</p>
+                    <p className="mt-2 text-sm leading-7 text-[#6A605A]">{item.subtitle}</p>
+                  </div>
+                  <span className="rounded-full bg-[#F3EAE3] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.22em] text-[#8B7C72]">
+                    Caso
+                  </span>
+                </div>
+
+                <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                  <div className="rounded-[22px] border border-[#E8DDD4] bg-[#FBF8F5] p-3">
+                    <div className="mb-3 inline-flex rounded-full bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-[#8B7C72]">
+                      Antes
+                    </div>
+                    <div className="relative aspect-[3/4] overflow-hidden rounded-[18px] bg-[#EFE6DF]">
+                      <Image src={item.before} alt={`Antes do tratamento - ${item.title}`} fill className="object-cover" />
+                    </div>
+                  </div>
+
+                  <div className="rounded-[22px] border border-[#E8DDD4] bg-[#FBF8F5] p-3">
+                    <div className="mb-3 inline-flex rounded-full bg-[#BAA391] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-white">
+                      Depois
+                    </div>
+                    <div className="relative aspect-[3/4] overflow-hidden rounded-[18px] bg-[#EFE6DF]">
+                      <Image src={item.after} alt={`Depois do tratamento - ${item.title}`} fill className="object-cover" />
+                    </div>
+                  </div>
+                </div>
+              </Card>
             ))}
           </div>
         </div>
       </section>
 
-      <section id="tratamentos" className="bg-[#F7F5F3] py-16 sm:py-20">
-        <div className="mx-auto max-w-7xl px-5 lg:px-8">
-          <SectionTitle
-            eyebrow="Tratamentos"
-            title="Tratamentos que unem saúde, função e estética para o seu sorriso"
-            description="Conheça as especialidades da BD Odontologia e veja como cada tratamento pode contribuir para prevenção, reabilitação, conforto e confiança no dia a dia, sempre com atendimento individualizado."
+      <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-20 lg:px-8">
+        <div className="grid gap-6 lg:grid-cols-[0.92fr_1.08fr]">
+          <SectionHeader
+            overline="Como funciona"
+            title="Um atendimento claro, organizado e pensado para transmitir segurança"
+            description="A experiência é conduzida com atenção desde o primeiro contato, para que você entenda cada etapa e se sinta confortável ao longo do processo."
           />
 
-          <div className="mt-10 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {services.map((service) => {
-              const Icon = service.icon;
-
-              return (
-                <article
-                  key={service.id}
-                  className="rounded-[28px] border border-[#E3D3C8] bg-white p-6 text-left transition duration-300 hover:-translate-y-1 hover:shadow-[0_16px_36px_rgba(112,77,27,0.10)]"
-                >
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#F7F5F3] text-[#BAA391]">
-                    <Icon className="h-5 w-5" />
-                  </div>
-
-                  <h3 className="mt-4 text-2xl text-[#2F3437]">{service.title}</h3>
-                  <p className="mt-3 text-sm leading-7 text-[#5B646C]">{service.short}</p>
-
-                  <p className="mt-4 text-sm leading-7 text-[#8B9298]">
-                    {service.description}
-                  </p>
-
-                  <div className="mt-5 space-y-2">
-                    {service.bullets.map((item) => (
-                      <div
-                        key={item}
-                        className="flex items-start gap-2 text-sm leading-6 text-[#5E4A40]"
-                      >
-                        <span className="mt-2 h-1.5 w-1.5 rounded-full bg-[#BAA391]" />
-                        <span>{item}</span>
-                      </div>
-                    ))}
-                  </div>
-
-                  <a
-                    href={WHATSAPP_URL}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#BAA391] px-5 py-3 text-sm font-medium text-white transition hover:-translate-y-0.5 hover:bg-[#A28D7D]"
-                  >
-                    Agendar avaliação
-                    <ArrowRight className="h-4 w-4" />
-                  </a>
-                </article>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      <section id="jornada" className="mx-auto max-w-7xl px-5 py-16 sm:py-20 lg:px-8">
-        <SectionTitle
-          eyebrow="Jornada do paciente"
-          title="Uma experiência organizada do primeiro contato ao acompanhamento"
-          description="Cada etapa do atendimento é pensada para oferecer mais clareza, segurança e confiança ao paciente."
-        />
-
-        <div className="mt-10 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-          {steps.map((step) => (
-            <article
-              key={step.number}
-              className="group rounded-[30px] border border-[#E6D8CE] bg-white p-6 shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(84,60,49,0.08)]"
-            >
-              <div className="flex items-center justify-between gap-3">
-                <span className="text-4xl text-[#BAA391]">{step.number}</span>
-                <CalendarDays className="h-5 w-5 text-[#BAA391] transition group-hover:translate-x-0.5" />
-              </div>
-              <h3 className="mt-5 text-2xl text-[#2F3437]">{step.title}</h3>
-              <p className="mt-3 text-sm leading-7 text-[#5B646C]">{step.text}</p>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section className="bg-[#3A4045] py-16 text-white sm:py-20">
-        <div className="mx-auto max-w-7xl px-5 lg:px-8">
-          <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.28em] text-white/70">
-                Diferenciais da BD Odontologia
-              </p>
-              <h2 className="mt-4 text-3xl leading-tight sm:text-5xl">
-                Cuidado completo para quem busca saúde, confiança e bem-estar.
-              </h2>
-              <p className="mt-5 text-sm leading-8 text-white/80 md:text-base">
-                A BD Odontologia combina atendimento humanizado, especialidades integradas e planejamento cuidadoso para oferecer uma experiência odontológica de alto padrão, com foco real na qualidade de vida do paciente.
-              </p>
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              {[
-                "Atendimento acolhedor e humanizado",
-                "Avaliação cuidadosa e individual",
-                "Especialidades para diferentes necessidades",
-                "Tratamentos com foco em função e estética",
-                "Acompanhamento próximo em cada etapa",
-                "Planejamento responsável e transparente",
-                "Agendamento facilitado por WhatsApp",
-                "Localização de fácil acesso no Ipiranga",
-              ].map((item) => (
-                <div
-                  key={item}
-                  className="flex items-start gap-3 rounded-[24px] border border-white/10 bg-white/5 px-5 py-4 backdrop-blur-sm"
-                >
-                  <BadgeCheck className="mt-0.5 h-4 w-4 shrink-0 text-[#F0C86F]" />
-                  <p className="text-sm leading-7 text-white/85">{item}</p>
+          <div className="grid gap-4 sm:grid-cols-2">
+            {steps.map((step, index) => (
+              <Card key={step.title} className="border-[#E5D7CC] bg-[linear-gradient(180deg,#FFFFFF_0%,#FBF6F1_100%)] p-5 sm:p-6">
+                <div className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-[#F2EAE4] text-sm font-semibold text-[#7A675B]">
+                  {String(index + 1).padStart(2, "0")}
                 </div>
-              ))}
-            </div>
+                <h3 className="mt-4 text-xl text-[#2D2825]">{step.title}</h3>
+                <p className="mt-3 text-sm leading-7 text-[#6A605A]">{step.text}</p>
+              </Card>
+            ))}
           </div>
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-5 py-16 sm:py-20 lg:px-8">
-        <SectionTitle
-          eyebrow="Experiência BD Odontologia"
-          title="Um cuidado que transmite confiança desde o primeiro contato"
-          description="A forma de atender, orientar e acompanhar cada paciente faz parte da experiência da clínica e reforça o compromisso com excelência, acolhimento e resultado."
-        />
+      <section id="contato" className="mx-auto max-w-7xl px-4 pb-16 pt-2 sm:px-6 sm:pb-24 lg:px-8">
+        <Card className="overflow-hidden border-[#DCCDBF] bg-[linear-gradient(135deg,#BAA391_0%,#C7B3A4_100%)] text-[#2D2825]">
+          <div className="grid gap-0 lg:grid-cols-[0.92fr_1.08fr]">
+            <div className="p-6 sm:p-8 lg:p-10">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#5F4E44] sm:text-xs">Contato</p>
+              <h2 className="mt-4 text-3xl leading-tight text-[#2D2825] sm:text-4xl">Agende sua avaliação e converse com a clínica pelo WhatsApp</h2>
+              <p className="mt-5 max-w-xl text-sm leading-8 text-[#3E3530]/80 sm:text-base">
+                Tire dúvidas, conheça os tratamentos disponíveis e inicie seu atendimento de forma prática, com orientação clara desde o primeiro contato.
+              </p>
 
-        <div className="mt-10 grid gap-6 lg:grid-cols-3">
-          {testimonials.map((item) => (
-            <article
-              key={item.name}
-              className="rounded-[30px] border border-[#E5D7CC] bg-white p-7 shadow-sm"
-            >
-              <div className="flex items-center gap-1 text-[#BAA391]">
-                {Array.from({ length: 5 }).map((_, idx) => (
-                  <Star key={idx} className="h-4 w-4 fill-current" />
-                ))}
-              </div>
-              <p className="mt-5 text-sm leading-8 text-[#5B646C]">“{item.text}”</p>
-              <div className="mt-6 border-t border-[#EEE2D9] pt-5">
-                <p className="font-semibold text-[#2F3437]">{item.name}</p>
-                <p className="mt-1 text-sm text-[#8B9298]">{item.role}</p>
-              </div>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section id="faq" className="bg-[#F7F5F3] py-16 sm:py-20">
-        <div className="mx-auto max-w-5xl px-5 lg:px-8">
-          <SectionTitle
-            eyebrow="Dúvidas frequentes"
-            title="Dúvidas sobre atendimento, localização e agendamento"
-            description="Aqui você encontra respostas rápidas para as principais dúvidas sobre os tratamentos, a localização da clínica e a forma de agendamento."
-          />
-
-          <div className="mt-10 space-y-4">
-            {faqs.map((item, index) => {
-              const isOpen = openFaq === index;
-
-              return (
-                <div
-                  key={item.q}
-                  className="overflow-hidden rounded-[26px] border border-[#E4D5CA] bg-white shadow-sm"
-                >
-                  <button
-                    type="button"
-                    onClick={() => setOpenFaq(isOpen ? -1 : index)}
-                    className="flex w-full items-center justify-between gap-4 px-6 py-5 text-left"
-                  >
-                    <span className="font-medium text-[#4A372F] md:text-lg">{item.q}</span>
-                    <ChevronDown
-                      className={[
-                        "h-5 w-5 shrink-0 text-[#8B9298] transition-transform duration-300",
-                        isOpen ? "rotate-180" : "rotate-0",
-                      ].join(" ")}
-                    />
-                  </button>
-                  <div
-                    className={[
-                      "grid transition-all duration-300",
-                      isOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
-                    ].join(" ")}
-                  >
-                    <div className="overflow-hidden">
-                      <p className="px-6 pb-6 text-sm leading-8 text-[#5B646C]">{item.a}</p>
-                    </div>
-                  </div>
+              <div className="mt-8 space-y-3 text-sm text-[#3E3530]">
+                <div className="flex items-start gap-3">
+                  <MapPin className="mt-1 h-4 w-4 shrink-0 text-[#6F5C50]" />
+                  <span>{ADDRESS}</span>
                 </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      <section className="mx-auto max-w-7xl px-5 py-16 sm:py-20 lg:px-8">
-        <div className="overflow-hidden rounded-[36px] border border-[#E4D5CA] bg-[linear-gradient(135deg,#F7F5F3_0%,#F7EEE7_52%,#F7F5F3_100%)] p-8 shadow-[0_24px_60px_rgba(90,66,54,0.08)] md:p-10">
-          <div className="grid gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[#8B9298]">
-                Agende sua avaliação
-              </p>
-              <h2 className="mt-4 text-3xl leading-tight text-[#2F3437] md:text-5xl">
-                Seu sorriso merece atenção, cuidado e um tratamento pensado para você.
-              </h2>
-              <p className="mt-5 max-w-2xl text-base leading-8 text-[#5B646C]">
-                Entre em contato com a BD Odontologia e agende sua avaliação para conhecer o tratamento mais indicado para o seu caso.
-              </p>
-            </div>
-
-            <div className="grid gap-3 sm:grid-cols-2">
-              <ExternalButton
-                href={WHATSAPP_URL}
-                className="inline-flex items-center justify-center gap-2 rounded-full bg-[#BAA391] px-6 py-3.5 text-sm font-medium text-white shadow-[0_16px_36px_rgba(166,110,0,0.18)] transition hover:-translate-y-0.5 hover:bg-[#A28D7D]"
-              >
-                Agendar avaliação
-                <ArrowRight className="h-4 w-4" />
-              </ExternalButton>
-              <Link
-                href="/acesso"
-                className="inline-flex items-center justify-center rounded-full border border-[#D7C2B4] bg-white px-6 py-3.5 text-sm font-medium text-[#5B646C] transition hover:bg-[#F7F5F3]"
-              >
-                Ir para área de acesso
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section id="contato" className="bg-[#2F3437] py-16 text-white sm:py-20">
-        <div className="mx-auto max-w-7xl px-5 lg:px-8">
-          <div className="grid gap-8 lg:grid-cols-[0.94fr_1.06fr]">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.28em] text-white/70">
-                Contato e localização
-              </p>
-              <h2 className="mt-4 text-3xl leading-tight sm:text-5xl">
-                Entre em contato e venha conhecer a BD Odontologia.
-              </h2>
-              <p className="mt-5 max-w-2xl text-sm leading-8 text-white/78 md:text-base">
-                Estamos no Ipiranga, em São Paulo, com atendimento pensado para oferecer praticidade no contato, acolhimento na consulta e confiança em cada etapa do tratamento.
-              </p>
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              {contactItems.map((item) => {
-                const Icon = item.icon;
-                return (
-                  <article
-                    key={item.title}
-                    className="rounded-[28px] border border-white/10 bg-white/5 p-6 backdrop-blur-sm"
-                  >
-                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10 text-[#F1CC7B]">
-                      <Icon className="h-5 w-5" />
-                    </div>
-                    <h3 className="mt-4 text-2xl text-white">{item.title}</h3>
-                    <p className="mt-3 text-sm leading-7 text-white/75">{item.text}</p>
-                    {item.href && item.cta ? (
-                      <a
-                        href={item.href}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="mt-4 inline-flex items-center gap-2 rounded-full border border-white/15 px-4 py-2 text-sm font-medium text-white transition hover:bg-white/10"
-                      >
-                        {item.cta}
-                        <ArrowRight className="h-4 w-4" />
-                      </a>
-                    ) : null}
-                  </article>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="mt-10 rounded-[28px] border border-white/10 bg-white/5 p-6 backdrop-blur-sm">
-            <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.28em] text-white/65">
-                  Fale com a clínica
-                </p>
-                <h3 className="mt-3 text-3xl text-white">
-                  Agende sua avaliação pelo WhatsApp
-                </h3>
-                <p className="mt-4 max-w-xl text-sm leading-8 text-white/78 md:text-base">
-                  Nossa equipe está pronta para orientar você, esclarecer dúvidas e ajudar no agendamento da sua avaliação com praticidade e atenção.
-                </p>
+                <div className="flex items-start gap-3">
+                  <Phone className="mt-1 h-4 w-4 shrink-0 text-[#6F5C50]" />
+                  <span>{PHONE_LABEL}</span>
+                </div>
+                <div className="flex items-start gap-3">
+                  <Instagram className="mt-1 h-4 w-4 shrink-0 text-[#6F5C50]" />
+                  <span>@bd.clinicaodontologicaa</span>
+                </div>
               </div>
 
-              <div className="rounded-[28px] bg-white p-6 text-[#4A372F] shadow-[0_20px_40px_rgba(0,0,0,0.12)]">
-                <h4 className="text-center text-2xl leading-tight text-[#2F3437]">
-                  Dê o próximo passo para cuidar do seu sorriso
-                </h4>
-                <p className="mt-3 text-center text-sm text-[#6F5B50]">
-                  Preencha os dados para iniciar seu atendimento
-                </p>
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+                <ExternalAnchor
+                  href={WHATSAPP_URL}
+                  className="inline-flex items-center justify-center gap-2 rounded-full bg-white px-6 py-3 text-sm font-semibold text-[#6E5B50] transition hover:bg-[#F6F0EB]"
+                >
+                  Chamar no WhatsApp
+                  <ArrowRight className="h-4 w-4" />
+                </ExternalAnchor>
+                <ExternalAnchor
+                  href={INSTAGRAM_URL}
+                  className="inline-flex items-center justify-center rounded-full border border-[#8F7768] px-6 py-3 text-sm font-medium text-[#3E3530] transition hover:bg-[#C8B4A5]/35"
+                >
+                  Ver Instagram
+                </ExternalAnchor>
+              </div>
+            </div>
+
+            <div className="bg-[#C9B5A7] p-5 sm:p-6 lg:p-8">
+              <div className="rounded-[24px] bg-white p-5 text-[#2D2825] sm:p-6">
+                <h3 className="text-2xl leading-tight">Dúvidas frequentes</h3>
                 <div className="mt-5 space-y-3">
-                  <input
-                    type="text"
-                    placeholder="Digite seu nome completo"
-                    className="w-full rounded-2xl bg-[#F1EFEE] px-4 py-3 text-sm text-[#4A372F] outline-none placeholder:text-[#8391A1]"
-                  />
-                  <input
-                    type="tel"
-                    placeholder="Digite seu telefone"
-                    className="w-full rounded-2xl bg-[#F1EFEE] px-4 py-3 text-sm text-[#4A372F] outline-none placeholder:text-[#8391A1]"
-                  />
-                  <a
-                    href={WHATSAPP_URL}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex w-full items-center justify-center rounded-2xl bg-[#BAA391] px-4 py-3 text-sm font-semibold text-white transition hover:brightness-95"
-                  >
-                    CHAMAR NO WHATSAPP
-                  </a>
+                  {faqs.map((item, index) => {
+                    const isOpen = openFaq === index;
+                    return (
+                      <div key={item.q} className="rounded-[20px] border border-[#E8DDD4] bg-[#FCFAF8] px-4 py-3.5">
+                        <button
+                          type="button"
+                          className="flex w-full items-center justify-between gap-4 text-left"
+                          onClick={() => setOpenFaq((current) => (current === index ? null : index))}
+                        >
+                          <span className="text-sm font-medium text-[#2D2825] sm:text-[15px]">{item.q}</span>
+                          <ChevronDown className={cx("h-4 w-4 shrink-0 text-[#8E7C71] transition", isOpen && "rotate-180")} />
+                        </button>
+                        {isOpen ? <p className="mt-3 pr-6 text-sm leading-7 text-[#6A605A]">{item.a}</p> : null}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             </div>
-
-            <div className="mt-8 flex flex-col gap-3 border-t border-white/10 pt-8 sm:flex-row sm:flex-wrap">
-              <Link
-                href="#inicio"
-                className="inline-flex items-center justify-center rounded-full bg-[#BAA391] px-6 py-3 text-sm font-medium text-[#2F3437] transition hover:bg-[#A28D7D]"
-              >
-                Voltar ao topo
-              </Link>
-              <Link
-                href="/acesso"
-                className="inline-flex items-center justify-center rounded-full border border-white/15 px-6 py-3 text-sm font-medium text-white transition hover:bg-white/10"
-              >
-                Área de acesso
-              </Link>
-              <a
-                href={INSTAGRAM_URL}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center justify-center rounded-full border border-white/15 px-6 py-3 text-sm font-medium text-white transition hover:bg-white/10"
-              >
-                Instagram
-              </a>
-            </div>
           </div>
-        </div>
+        </Card>
       </section>
+
+      <ExternalAnchor
+        href={WHATSAPP_URL}
+        className="fixed bottom-5 right-5 z-50 inline-flex items-center gap-2 rounded-full bg-[#BAA391] px-4 py-3 text-sm font-semibold text-white shadow-[0_18px_40px_rgba(126,98,79,0.26)] transition hover:-translate-y-0.5 hover:bg-[#A28D7D]"
+      >
+        <Phone className="h-4 w-4" />
+        WhatsApp
+      </ExternalAnchor>
     </main>
   );
 }
