@@ -265,32 +265,6 @@ export default function BDOdontologiaPage() {
         }}
       />
 
-      {/* <div className="border-b border-[#EAE0D8] bg-white/80 backdrop-blur-lg">
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-2.5 text-xs text-[#73685F] sm:px-6 lg:px-8">
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
-            <span className="inline-flex items-center gap-1.5">
-              <MapPin className="h-3.5 w-3.5 text-[#BAA391]" />
-              {ADDRESS}
-            </span>
-            <span className="inline-flex items-center gap-1.5">
-              <Clock3 className="h-3.5 w-3.5 text-[#BAA391]" />
-              Atendimento com horário agendado
-            </span>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <ExternalAnchor href={INSTAGRAM_URL} className="inline-flex items-center gap-1.5 transition hover:text-[#A18B7B]">
-              <Instagram className="h-3.5 w-3.5 text-[#BAA391]" />
-              Instagram
-            </ExternalAnchor>
-            <ExternalAnchor href={WHATSAPP_URL} className="inline-flex items-center gap-1.5 transition hover:text-[#A18B7B]">
-              <Phone className="h-3.5 w-3.5 text-[#BAA391]" />
-              {PHONE_LABEL}
-            </ExternalAnchor>
-          </div>
-        </div>
-      </div> */}
-
       <header className="sticky top-0 z-40 border-b border-[#EAE0D8] bg-[#F8F4F0]/88 backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
           <Link href="#inicio" className="flex min-w-0 items-center gap-3">

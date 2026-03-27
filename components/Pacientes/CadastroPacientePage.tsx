@@ -1,5 +1,5 @@
 "use client";
-
+import Image from "next/image";
 import React, { useMemo, useState, type ReactNode } from "react";
 import { UserRound, FileCheck2, Phone, IdCard } from "lucide-react";
 
@@ -103,8 +103,8 @@ function Btn({
         tone === "primary"
           ? { background: T.accent, borderColor: "rgba(17, 89, 35, 0.45)" }
           : tone === "danger"
-          ? { background: "#DC2626", borderColor: "rgba(220, 38, 38, 0.55)" }
-          : { background: T.card, borderColor: T.border, color: T.text }
+            ? { background: "#DC2626", borderColor: "rgba(220, 38, 38, 0.55)" }
+            : { background: T.card, borderColor: T.border, color: T.text }
       }
       {...props}
     >
@@ -449,8 +449,8 @@ function CadastroPaciente() {
                             background: disabled
                               ? "rgba(17,24,39,0.03)"
                               : form.etapas[step.key]
-                              ? T.accentSoft
-                              : T.cardSoft,
+                                ? T.accentSoft
+                                : T.cardSoft,
                             opacity: disabled ? 0.6 : 1,
                           }}
                         >
@@ -567,9 +567,28 @@ function CadastroPaciente() {
                   <MsgBox m={msg} />
                 </div>
               </div>
+
             </div>
+            {/* <div className="bg-[#baa391] p-10 flex items-center justify-center rounded-b-lg">
+              <Image
+                src="/logo2.png"
+                alt="BD Odontologia"
+                width={140}
+                height={140}
+                priority
+              />
+            </div> */}
           </main>
         </div>
+      </div>
+      <div className="bg-[#baa391] p-3 gap-4 flex items-center justify-center rounded-b-lg">
+        <Image
+          src="/logo2.png"
+          alt="BD Odontologia"
+          width={50}
+          height={50}
+          priority
+        />
       </div>
 
       <style jsx global>{`

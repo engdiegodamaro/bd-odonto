@@ -1,5 +1,5 @@
 "use client";
-
+import Image from "next/image";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   AlertTriangle,
@@ -470,17 +470,17 @@ export function VisualizacaoPacientesPage() {
 
         const items: Patient[] = Array.isArray(data.items)
           ? data.items.map((row) => ({
-              id: String(row.id ?? ""),
-              nome_completo: String(row.nome_completo ?? ""),
-              celular: String(row.celular ?? ""),
-              cpf: String(row.cpf ?? ""),
-              exige_nf: Boolean(row.exige_nf),
-              observacoes: row.observacoes ? String(row.observacoes) : null,
-              etapa_atual: row.etapa_atual ?? null,
-              etapas: normalizeSteps(row.etapas),
-              created_at: row.created_at ? String(row.created_at) : undefined,
-              updated_at: row.updated_at ? String(row.updated_at) : undefined,
-            }))
+            id: String(row.id ?? ""),
+            nome_completo: String(row.nome_completo ?? ""),
+            celular: String(row.celular ?? ""),
+            cpf: String(row.cpf ?? ""),
+            exige_nf: Boolean(row.exige_nf),
+            observacoes: row.observacoes ? String(row.observacoes) : null,
+            etapa_atual: row.etapa_atual ?? null,
+            etapas: normalizeSteps(row.etapas),
+            created_at: row.created_at ? String(row.created_at) : undefined,
+            updated_at: row.updated_at ? String(row.updated_at) : undefined,
+          }))
           : [];
 
         if (!active) return;
@@ -512,8 +512,8 @@ export function VisualizacaoPacientesPage() {
         const matchesQuery = !query
           ? true
           : [row.nome_completo, row.cpf, row.celular]
-              .filter(Boolean)
-              .some((value) => String(value).toLowerCase().includes(query.toLowerCase()));
+            .filter(Boolean)
+            .some((value) => String(value).toLowerCase().includes(query.toLowerCase()));
 
         const matchesPriority = priorityFilter === "todos" ? true : row.priority === priorityFilter;
         const matchesStage = stageFilter === "todos" ? true : row.currentStepKey === stageFilter;
@@ -887,6 +887,16 @@ export function VisualizacaoPacientesPage() {
             </ChartCard>
           </div>
         </div>
+
+      </div>
+      <div className="bg-[#baa391] p-3 gap-4 flex items-center justify-center rounded-b-lg">
+        <Image
+          src="/logo2.png"
+          alt="BD Odontologia"
+          width={50}
+          height={50}
+          priority
+        />
       </div>
 
       {drawerOpen && selectedPatient && (

@@ -1,5 +1,5 @@
 "use client";
-
+import Image from "next/image";
 import React, { useEffect, useMemo, useState } from "react";
 import {
   ChevronRight,
@@ -117,14 +117,14 @@ function Btn({
         tone === "primary"
           ? { background: T.accent, borderColor: "rgba(17, 89, 35, 0.45)" }
           : tone === "danger"
-          ? { background: "#DC2626", borderColor: "rgba(220, 38, 38, 0.55)" }
-          : tone === "subtleDanger"
-          ? {
-              background: "rgba(127, 29, 29, 0.03)",
-              borderColor: "rgba(127, 29, 29, 0.16)",
-              color: "rgba(127, 29, 29, 0.88)",
-            }
-          : { background: T.card, borderColor: T.border, color: T.text }
+            ? { background: "#DC2626", borderColor: "rgba(220, 38, 38, 0.55)" }
+            : tone === "subtleDanger"
+              ? {
+                background: "rgba(127, 29, 29, 0.03)",
+                borderColor: "rgba(127, 29, 29, 0.16)",
+                color: "rgba(127, 29, 29, 0.88)",
+              }
+              : { background: T.card, borderColor: T.border, color: T.text }
       }
       {...props}
     >
@@ -274,9 +274,9 @@ export function BasePacientesPage() {
 
       const items = Array.isArray(data?.items)
         ? data.items.map((row: any) => ({
-            ...row,
-            etapas: normalizeSteps(row.etapas),
-          }))
+          ...row,
+          etapas: normalizeSteps(row.etapas),
+        }))
         : [];
 
       setRows(items);
@@ -297,8 +297,8 @@ export function BasePacientesPage() {
       const matchesQuery = !query
         ? true
         : [row.nome_completo, row.cpf, row.celular]
-            .filter(Boolean)
-            .some((value) => String(value).toLowerCase().includes(query.toLowerCase()));
+          .filter(Boolean)
+          .some((value) => String(value).toLowerCase().includes(query.toLowerCase()));
 
       const rowCurrentStep = getCurrentStep(row.etapas, row.exige_nf);
       const matchesStage = stageFilter === "todos" ? true : rowCurrentStep === stageFilter;
@@ -629,11 +629,21 @@ export function BasePacientesPage() {
                   </tbody>
                 </table>
               </div>
+
             </div>
+
           </div>
         </div>
       </div>
-
+      <div className="bg-[#baa391] p-3 gap-4 flex items-center justify-center rounded-b-lg">
+        <Image
+          src="/logo2.png"
+          alt="BD Odontologia"
+          width={50}
+          height={50}
+          priority
+        />
+      </div>
       <div
         className={cx(
           "fixed inset-0 z-40 transition-opacity duration-200",
@@ -848,8 +858,8 @@ export function BasePacientesPage() {
                             background: disabled
                               ? "rgba(17,24,39,0.03)"
                               : editing.etapas[step.key]
-                              ? T.accentSoft
-                              : T.cardSoft,
+                                ? T.accentSoft
+                                : T.cardSoft,
                             opacity: disabled ? 0.6 : 1,
                           }}
                         >
