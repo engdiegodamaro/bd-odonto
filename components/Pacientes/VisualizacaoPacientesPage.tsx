@@ -889,12 +889,12 @@ export function VisualizacaoPacientesPage() {
         </div>
 
       </div>
-      <div className="bg-[#baa391] p-3 gap-4 flex items-center justify-center rounded-b-lg">
+      <div className="bg-[#baa391] p-6 gap-4 flex items-center justify-center rounded-b-lg">
         <Image
           src="/logo2.png"
           alt="BD Odontologia"
-          width={50}
-          height={50}
+          width={70}
+          height={70}
           priority
         />
       </div>
