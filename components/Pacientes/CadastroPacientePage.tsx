@@ -24,9 +24,9 @@ const T = {
   accentSoft: "rgba(190, 142, 87, 0.17)",
   accentRing: "rgba(190, 142, 87, 0.17)",
 
-  okBg: "#baa391",
-  okBd: "#baa391",
-  okTx: "#baa391",
+  okBg: "rgba(186, 163, 145, 0.16)",
+  okBd: "rgba(186, 163, 145, 0.34)",
+  okTx: "#6F5A4D",
 
   errBg: "rgba(239, 68, 68, 0.10)",
   errBd: "rgba(239, 68, 68, 0.30)",
@@ -133,6 +133,7 @@ function Pill({ children }: { children: ReactNode }) {
 
 function MsgBox({ m }: { m: { type: "ok" | "err"; text: string } | null }) {
   if (!m) return null;
+
   const s =
     m.type === "ok"
       ? { background: T.okBg, borderColor: T.okBd, color: T.okTx }
@@ -250,8 +251,12 @@ function CadastroPaciente() {
 
   const validate = () => {
     if (!String(form.nome_completo || "").trim()) return "Informe o nome completo.";
-    if (digitsOnly(form.cpf).length !== 11) return "CPF inválido. Informe 11 dígitos.";
-    if (digitsOnly(form.celular).length < 10) return "Celular inválido.";
+
+    const cpf = digitsOnly(form.cpf);
+    const celular = digitsOnly(form.celular);
+
+    if (cpf.length > 0 && cpf.length !== 11) return "CPF inválido. Informe 11 dígitos.";
+    if (celular.length > 0 && celular.length < 10) return "Celular inválido.";
     return null;
   };
 
@@ -278,8 +283,8 @@ function CadastroPaciente() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           nome_completo: String(form.nome_completo || "").trim(),
-          celular: digitsOnly(form.celular),
-          cpf: digitsOnly(form.cpf),
+          celular: digitsOnly(form.celular) || null,
+          cpf: digitsOnly(form.cpf) || null,
           exige_nf: form.exige_nf,
           observacoes: String(form.observacoes || "").trim() || null,
           etapas: form.etapas,
@@ -291,7 +296,8 @@ function CadastroPaciente() {
         return setMsg({ type: "err", text: data?.error || "Erro ao cadastrar paciente." });
       }
 
-      setMsg({ type: "ok", text: "Paciente cadastrado com sucesso ✅" });
+      setMsg({ type: "ok", text: "Paciente salvo." });
+      setTimeout(() => setMsg(null), 2500);
       resetForm();
     } catch (e: any) {
       setMsg({ type: "err", text: e?.message || "Erro inesperado." });
@@ -310,9 +316,10 @@ function CadastroPaciente() {
                 Cadastro de paciente
               </div>
               <div className={cx(UI.headerSub, "mt-1")} style={{ color: T.text3 }}>
-                Cadastre o paciente com <span style={{ color: T.text2, fontWeight: 600 }}>nome completo</span>,{" "}
-                <span style={{ color: T.text2, fontWeight: 600 }}>celular</span>,{" "}
-                <span style={{ color: T.text2, fontWeight: 600 }}>CPF</span> e defina o avanço inicial no fluxo de atendimento.
+                Cadastre o paciente com <span style={{ color: T.text2, fontWeight: 600 }}>nome completo</span>
+                {' '}(obrigatório), e preencha <span style={{ color: T.text2, fontWeight: 600 }}>celular</span>
+                {' '}e <span style={{ color: T.text2, fontWeight: 600 }}>CPF</span> apenas se quiser. Depois,
+                defina o avanço inicial no fluxo de atendimento.
               </div>
 
               <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -340,7 +347,7 @@ function CadastroPaciente() {
                     Informações principais para cadastro.
                   </div>
                 </div>
-                <Pill>Obrigatório</Pill>
+                <Pill>Somente nome obrigatório</Pill>
               </div>
 
               <div className="mt-4 grid gap-4">
@@ -362,7 +369,7 @@ function CadastroPaciente() {
 
                 <div>
                   <label className={UI.label} style={{ color: T.text2 }}>
-                    Número de celular
+                    Número de celular (opcional)
                   </label>
                   <div className="relative mt-1">
                     <input
@@ -379,7 +386,7 @@ function CadastroPaciente() {
 
                 <div>
                   <label className={UI.label} style={{ color: T.text2 }}>
-                    CPF
+                    CPF (opcional)
                   </label>
                   <div className="relative mt-1">
                     <input
@@ -501,7 +508,7 @@ function CadastroPaciente() {
 
                       <div>
                         <div className="text-[11px] font-medium" style={{ color: T.text3 }}>
-                          CPF
+                          CPF (opcional)
                         </div>
                         <div className="text-sm mt-1" style={{ color: T.text2 }}>
                           {form.cpf || "—"}

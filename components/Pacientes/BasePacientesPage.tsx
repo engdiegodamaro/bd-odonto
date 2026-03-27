@@ -12,6 +12,8 @@ import {
   Loader2,
   FileText,
   ClipboardList,
+  Trash2,
+  AlertTriangle,
 } from "lucide-react";
 
 const cx = (...p: Array<string | false | null | undefined>) => p.filter(Boolean).join(" ");
@@ -97,7 +99,7 @@ function Btn({
   className,
   ...props
 }: React.ButtonHTMLAttributes<HTMLButtonElement> & {
-  tone?: "primary" | "secondary" | "danger";
+  tone?: "primary" | "secondary" | "danger" | "subtleDanger";
   loading?: boolean;
 }) {
   const base =
@@ -105,7 +107,7 @@ function Btn({
     "disabled:opacity-50 disabled:cursor-not-allowed transition active:translate-y-[0.5px]";
 
   const styles =
-    tone === "primary" ? "text-white" : tone === "danger" ? "text-white" : "bg-white";
+    tone === "primary" || tone === "danger" ? "text-white" : tone === "subtleDanger" ? "bg-white" : "bg-white";
 
   return (
     <button
@@ -116,6 +118,12 @@ function Btn({
           ? { background: T.accent, borderColor: "rgba(17, 89, 35, 0.45)" }
           : tone === "danger"
           ? { background: "#DC2626", borderColor: "rgba(220, 38, 38, 0.55)" }
+          : tone === "subtleDanger"
+          ? {
+              background: "rgba(127, 29, 29, 0.03)",
+              borderColor: "rgba(127, 29, 29, 0.16)",
+              color: "rgba(127, 29, 29, 0.88)",
+            }
           : { background: T.card, borderColor: T.border, color: T.text }
       }
       {...props}
@@ -123,7 +131,7 @@ function Btn({
       {loading ? (
         <>
           <span className="w-4 h-4 rounded-full border-2 border-current border-t-transparent animate-spin" />
-          <span>Salvando…</span>
+          <span>Processando…</span>
         </>
       ) : (
         children
@@ -248,12 +256,14 @@ export function BasePacientesPage() {
   const [rows, setRows] = useState<Patient[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editing, setEditing] = useState<Patient>(emptyPatient());
   const [msg, setMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
   const [query, setQuery] = useState("");
   const [stageFilter, setStageFilter] = useState("todos");
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   async function loadPatients() {
     setLoading(true);
@@ -310,6 +320,7 @@ export function BasePacientesPage() {
       observacoes: selectedPatient.observacoes || "",
       etapas: normalizeSteps(selectedPatient.etapas),
     });
+    setConfirmDelete(false);
   }, [selectedPatient]);
 
   const currentStepLabel = useMemo(() => getCurrentStepLabel(editing), [editing]);
@@ -327,11 +338,13 @@ export function BasePacientesPage() {
     setSelectedId(row.id);
     setDrawerOpen(true);
     setMsg(null);
+    setConfirmDelete(false);
   }
 
   function closeDrawer() {
     setDrawerOpen(false);
     setMsg(null);
+    setConfirmDelete(false);
   }
 
   function setField<K extends keyof Patient>(key: K, value: Patient[K]) {
@@ -400,6 +413,41 @@ export function BasePacientesPage() {
     }
   }
 
+  async function deletePatient() {
+    if (!selectedPatient?.id) {
+      setMsg({ type: "err", text: "Paciente não encontrado para exclusão." });
+      return;
+    }
+
+    setDeleting(true);
+    setMsg(null);
+    try {
+      const res = await fetch(`/api/pacientes/${selectedPatient.id}`, {
+        method: "DELETE",
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || "Erro ao excluir paciente.");
+
+      setRows((prev) => {
+        const nextRows = prev.filter((row) => row.id !== selectedPatient.id);
+        setSelectedId(nextRows[0]?.id ?? null);
+        if (!nextRows.length) {
+          setEditing(emptyPatient());
+        }
+        return nextRows;
+      });
+
+      setConfirmDelete(false);
+      setDrawerOpen(false);
+      setMsg(null);
+    } catch (e: any) {
+      setMsg({ type: "err", text: e?.message || "Erro ao excluir paciente." });
+    } finally {
+      setDeleting(false);
+    }
+  }
+
   return (
     <section className={UI.page} style={{ background: T.bg, color: T.text }}>
       <div className={UI.container}>
@@ -433,9 +481,6 @@ export function BasePacientesPage() {
                 <div className={UI.sectionTitle} style={{ color: T.text }}>
                   Lista de pacientes
                 </div>
-                {/* <div className={cx(UI.sectionHint, "mt-1")} style={{ color: T.text3 }}>
-                  Clique em qualquer linha para abrir o drawer lateral com os dados editáveis.
-                </div> */}
               </div>
             </div>
 
@@ -461,19 +506,19 @@ export function BasePacientesPage() {
                   Etapa atual
                 </label>
                 <div className="py-1">
-                <select
-                  value={stageFilter}
-                  onChange={(e) => setStageFilter(e.target.value)}
-                  className={UI.select}
-                  style={{ borderColor: T.border }}
-                >
-                  <option value="todos">Todas as etapas</option>
-                  {PATIENT_STEPS.map((step) => (
-                    <option key={step.key} value={step.key}>
-                      {step.label}
-                    </option>
-                  ))}
-                </select>
+                  <select
+                    value={stageFilter}
+                    onChange={(e) => setStageFilter(e.target.value)}
+                    className={UI.select}
+                    style={{ borderColor: T.border }}
+                  >
+                    <option value="todos">Todas as etapas</option>
+                    {PATIENT_STEPS.map((step) => (
+                      <option key={step.key} value={step.key}>
+                        {step.label}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
             </div>
@@ -634,8 +679,11 @@ export function BasePacientesPage() {
 
           <div className="flex-1 overflow-y-auto px-5 py-5">
             {!selectedPatient ? (
-              <div className="h-full flex items-center justify-center text-sm" style={{ color: T.text3 }}>
-                Selecione um paciente na lista.
+              <div className="space-y-4">
+                <div className="h-full flex items-center justify-center text-sm" style={{ color: T.text3 }}>
+                  Selecione um paciente na lista.
+                </div>
+                <MsgBox m={msg} />
               </div>
             ) : (
               <div className="space-y-4">
@@ -845,18 +893,68 @@ export function BasePacientesPage() {
                   />
                 </div>
 
+                {confirmDelete && (
+                  <div
+                    className={cx(UI.section, "p-4 rounded-lg")}
+                    style={{
+                      borderColor: "rgba(127, 29, 29, 0.12)",
+                      background: "rgba(127, 29, 29, 0.025)",
+                    }}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div
+                        className="w-9 h-9 rounded-md border flex items-center justify-center shrink-0"
+                        style={{
+                          borderColor: "rgba(127, 29, 29, 0.12)",
+                          background: "rgba(127, 29, 29, 0.04)",
+                        }}
+                      >
+                        <AlertTriangle className="w-4 h-4" style={{ color: "rgba(127, 29, 29, 0.78)" }} />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="text-sm font-semibold" style={{ color: T.text }}>
+                          Excluir registro
+                        </div>
+                        <div className="mt-1 text-xs" style={{ color: T.text2 }}>
+                          O paciente <strong>{selectedPatient.nome_completo}</strong> será removido da base de forma permanente.
+                        </div>
+                        <div className="mt-4 flex flex-wrap items-center gap-2">
+                          <Btn tone="secondary" onClick={() => setConfirmDelete(false)} disabled={deleting || saving}>
+                            Cancelar
+                          </Btn>
+                          <Btn tone="subtleDanger" onClick={deletePatient} loading={deleting} disabled={saving}>
+                            <Trash2 className="w-4 h-4" />
+                            Excluir agora
+                          </Btn>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 <MsgBox m={msg} />
               </div>
             )}
           </div>
 
-          <div className="border-t bg-white px-5 py-4 flex items-center justify-end gap-3" style={{ borderColor: T.border }}>
-            <Btn tone="secondary" onClick={closeDrawer} disabled={saving}>
-              Fechar
-            </Btn>
-            <Btn tone="primary" onClick={savePatient} disabled={!selectedPatient || saving} loading={saving}>
-              Salvar alterações
-            </Btn>
+          <div className="border-t bg-white px-5 py-4 flex items-center justify-between gap-3 flex-wrap" style={{ borderColor: T.border }}>
+            <div>
+              {selectedPatient && !confirmDelete && (
+                <Btn tone="subtleDanger" onClick={() => setConfirmDelete(true)} disabled={saving || deleting}>
+                  <Trash2 className="w-4 h-4" />
+                  Excluir registro
+                </Btn>
+              )}
+            </div>
+
+            <div className="flex items-center gap-3">
+              <Btn tone="secondary" onClick={closeDrawer} disabled={saving || deleting}>
+                Fechar
+              </Btn>
+              <Btn tone="primary" onClick={savePatient} disabled={!selectedPatient || saving || deleting} loading={saving}>
+                Salvar alterações
+              </Btn>
+            </div>
           </div>
         </div>
       </aside>

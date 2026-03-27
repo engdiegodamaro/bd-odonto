@@ -122,14 +122,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (cpf.length !== 11) {
+    if (cpf.length > 0 && cpf.length !== 11) {
       return NextResponse.json(
         { ok: false, error: "CPF inválido. Informe 11 dígitos." },
         { status: 400 }
       );
     }
 
-    if (celular.length < 10) {
+    if (celular.length > 0 && celular.length < 10) {
       return NextResponse.json(
         { ok: false, error: "Celular inválido." },
         { status: 400 }
@@ -142,8 +142,8 @@ export async function POST(req: NextRequest) {
       .from("pacientes")
       .insert({
         nome_completo,
-        celular,
-        cpf,
+        celular: celular || null,
+        cpf: cpf || null,
         exige_nf,
         etapas,
         etapa_atual,

@@ -22,11 +22,11 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-const INSTAGRAM_URL = "https://www.instagram.com/bd.clinicaodontologicaa/";
+const INSTAGRAM_URL = "https://www.instagram.com/drabrunadamaro/";
 const WHATSAPP_URL =
-  "https://wa.me/5511984760850?text=Ol%C3%A1!%20Gostaria%20de%20agendar%20uma%20avalia%C3%A7%C3%A3o%20na%20BD%20Odontologia.";
+  "https://wa.me/5511973058848?text=Ol%C3%A1!%20Gostaria%20de%20agendar%20uma%20avalia%C3%A7%C3%A3o%20na%20BD%20Odontologia.";
 const ADDRESS = "Rua Bom Pastor, 2444 - Ipiranga, São Paulo - SP, sala 1403";
-const PHONE_LABEL = "(11) 98476-0850";
+const PHONE_LABEL = "(11) 97305-8848";
 
 const cx = (...parts: Array<string | false | null | undefined>) => parts.filter(Boolean).join(" ");
 
@@ -57,7 +57,7 @@ const navItems = [
   { href: "#tratamentos", label: "Tratamentos" },
   { href: "#profissional", label: "Profissional" },
   { href: "#consultorio", label: "Consultório" },
-  { href: "#resultados", label: "Resultados" },
+  // { href: "#resultados", label: "Resultados" },
   { href: "#contato", label: "Contato" },
 ];
 
@@ -112,7 +112,7 @@ const highlights = [
 
 const beforeAfterCases: BeforeAfterCase[] = [
   {
-    title: "Clareamento dental",
+    title: "Lentes ou facetas",
     subtitle: "Evolução com mais luminosidade e naturalidade no sorriso.",
     before: "/antes-1.png",
     after: "/depois-1.png",
@@ -124,13 +124,13 @@ const beforeAfterCases: BeforeAfterCase[] = [
     after: "/depois-2.png",
   },
   {
-    title: "Alinhamento dental",
+    title: "Protose total e protocolo",
     subtitle: "Acompanhamento do tratamento com foco em função e estética.",
     before: "/antes-4.png",
     after: "/depois-4.png",
   },
   {
-    title: "Lentes ou facetas",
+    title: "Reabilitação Oral",
     subtitle: "Resultado planejado para valorizar o sorriso com equilíbrio.",
     before: "/antes-3.png",
     after: "/depois-3.png",
@@ -596,7 +596,7 @@ export default function BDOdontologiaPage() {
       </section>
 
 
-      <section id="resultados" className="mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-20 lg:px-8">
+      {/* <section id="resultados" className="mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-20 lg:px-8">
         <div className="grid gap-8">
           <SectionHeader
             overline="Resultados"
@@ -640,7 +640,7 @@ export default function BDOdontologiaPage() {
             ))}
           </div>
         </div>
-      </section>
+      </section> */}
 
       <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-20 lg:px-8">
         <div className="grid gap-6 lg:grid-cols-[0.92fr_1.08fr]">
@@ -685,7 +685,7 @@ export default function BDOdontologiaPage() {
                 </div>
                 <div className="flex items-start gap-3">
                   <Instagram className="mt-1 h-4 w-4 shrink-0 text-[#6F5C50]" />
-                  <span>@bd.clinicaodontologicaa</span>
+                  <span>@drabrunadamaro</span>
                 </div>
               </div>
 
