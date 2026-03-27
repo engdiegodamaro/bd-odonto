@@ -265,7 +265,7 @@ export default function BDOdontologiaPage() {
         }}
       />
 
-      <div className="border-b border-[#EAE0D8] bg-white/80 backdrop-blur-lg">
+      {/* <div className="border-b border-[#EAE0D8] bg-white/80 backdrop-blur-lg">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-2.5 text-xs text-[#73685F] sm:px-6 lg:px-8">
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
             <span className="inline-flex items-center gap-1.5">
@@ -289,7 +289,7 @@ export default function BDOdontologiaPage() {
             </ExternalAnchor>
           </div>
         </div>
-      </div>
+      </div> */}
 
       <header className="sticky top-0 z-40 border-b border-[#EAE0D8] bg-[#F8F4F0]/88 backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
