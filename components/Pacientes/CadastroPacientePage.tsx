@@ -347,7 +347,6 @@ function CadastroPaciente() {
                     Informações principais para cadastro.
                   </div>
                 </div>
-                <Pill>Somente nome obrigatório</Pill>
               </div>
 
               <div className="mt-4 grid gap-4">
