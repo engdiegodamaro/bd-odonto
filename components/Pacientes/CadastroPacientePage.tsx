@@ -1,6 +1,6 @@
 "use client";
 import Image from "next/image";
-import React, { useMemo, useState, type ReactNode } from "react";
+import React, { useState } from "react";
 import { UserRound, FileCheck2, Phone, IdCard } from "lucide-react";
 
 const cx = (...p: Array<string | false | null | undefined>) => p.filter(Boolean).join(" ");
@@ -22,7 +22,7 @@ const T = {
   accent: "#baa391",
   accent2: "#baa391",
   accentSoft: "rgba(190, 142, 87, 0.17)",
-  accentRing: "rgba(190, 142, 87, 0.17)",
+  accentRing: "rgba(186, 163, 145, 0.22)",
 
   okBg: "rgba(186, 163, 145, 0.16)",
   okBd: "rgba(186, 163, 145, 0.34)",
@@ -34,24 +34,24 @@ const T = {
 } as const;
 
 const UI = {
-  page: "w-full min-w-0",
-  container: "mx-auto w-full max-w-[1480px] px-4 sm:px-6 py-6",
+  page: "w-full min-w-0 overflow-x-hidden",
+  container: "mx-auto w-full max-w-[1480px] px-3 sm:px-5 lg:px-6 py-4 sm:py-6",
 
-  header: "border bg-white",
-  section: "border bg-white",
+  header: "border bg-white rounded-2xl",
+  section: "border bg-white rounded-2xl shadow-[0_8px_30px_rgba(15,23,42,0.04)]",
 
-  headerTitle: "text-base sm:text-lg font-semibold tracking-tight",
-  headerSub: "text-xs",
-  sectionTitle: "text-sm font-semibold",
-  sectionHint: "text-xs",
+  headerTitle: "text-lg sm:text-xl font-semibold tracking-tight",
+  headerSub: "text-xs sm:text-sm leading-5",
+  sectionTitle: "text-sm sm:text-[15px] font-semibold",
+  sectionHint: "text-xs leading-5",
   label: "text-[11px] font-medium",
   help: "text-[11px]",
 
   input:
-    "w-full h-10 px-3 border bg-white text-sm outline-none transition " +
+    "w-full h-11 sm:h-12 px-3 border bg-white text-sm outline-none transition rounded-xl " +
     "focus:ring-2",
   textarea:
-    "w-full min-h-[110px] px-3 py-2 border bg-white text-sm outline-none transition " +
+    "w-full min-h-[120px] sm:min-h-[140px] px-3 py-3 border bg-white text-sm outline-none transition rounded-xl " +
     "focus:ring-2",
 } as const;
 
@@ -89,8 +89,8 @@ function Btn({
   loading?: boolean;
 }) {
   const base =
-    "inline-flex items-center justify-center gap-2 h-10 px-4 text-sm font-semibold border rounded-md " +
-    "disabled:opacity-50 disabled:cursor-not-allowed transition active:translate-y-[0.5px]";
+    "inline-flex items-center justify-center gap-2 h-11 sm:h-12 px-4 sm:px-5 text-sm font-semibold border rounded-xl " +
+    "disabled:opacity-50 disabled:cursor-not-allowed transition active:translate-y-[0.5px] whitespace-nowrap";
 
   const styles =
     tone === "primary" ? "text-white" : tone === "danger" ? "text-white" : "bg-white";
@@ -101,7 +101,7 @@ function Btn({
       disabled={disabled || loading}
       style={
         tone === "primary"
-          ? { background: T.accent, borderColor: "rgba(17, 89, 35, 0.45)" }
+          ? { background: T.accent, borderColor: "rgba(111, 90, 77, 0.28)" }
           : tone === "danger"
             ? { background: "#DC2626", borderColor: "rgba(220, 38, 38, 0.55)" }
             : { background: T.card, borderColor: T.border, color: T.text }
@@ -120,17 +120,6 @@ function Btn({
   );
 }
 
-function Pill({ children }: { children: ReactNode }) {
-  return (
-    <span
-      className="inline-flex items-center h-7 px-2.5 text-[11px] font-medium border rounded-md"
-      style={{ borderColor: T.border, background: T.cardSoft, color: T.text2 }}
-    >
-      {children}
-    </span>
-  );
-}
-
 function MsgBox({ m }: { m: { type: "ok" | "err"; text: string } | null }) {
   if (!m) return null;
 
@@ -140,7 +129,7 @@ function MsgBox({ m }: { m: { type: "ok" | "err"; text: string } | null }) {
       : { background: T.errBg, borderColor: T.errBd, color: T.errTx };
 
   return (
-    <div className="text-sm px-3 py-2 border rounded-md" style={s}>
+    <div className="text-sm px-3 py-3 border rounded-xl" style={s}>
       {m.text}
     </div>
   );
@@ -188,21 +177,6 @@ function emptySteps(): PatientSteps {
   };
 }
 
-function getCurrentStep(steps: PatientSteps, exigeNF: boolean) {
-  let current: StepKey | null = null;
-  for (const step of PATIENT_STEPS) {
-    if (step.optional && !exigeNF) continue;
-    if (steps[step.key]) current = step.key;
-  }
-  return current;
-}
-
-function progressPercent(steps: PatientSteps, exigeNF: boolean) {
-  const relevant = PATIENT_STEPS.filter((step) => !step.optional || exigeNF);
-  const done = relevant.filter((step) => steps[step.key]).length;
-  return relevant.length ? Math.round((done / relevant.length) * 100) : 0;
-}
-
 /* =========================================================
    PAGE
 ========================================================= */
@@ -223,20 +197,19 @@ function CadastroPaciente() {
     etapas: emptySteps(),
   }));
 
-  const currentStep = useMemo(
-    () => getCurrentStep(form.etapas, form.exige_nf),
-    [form.etapas, form.exige_nf]
-  );
+  const currentStep = PATIENT_STEPS.reduce<StepKey | null>((current, step) => {
+    if (step.optional && !form.exige_nf) return current;
+    return form.etapas[step.key] ? step.key : current;
+  }, null);
 
-  const currentStepLabel = useMemo(
-    () => PATIENT_STEPS.find((step) => step.key === currentStep)?.label || "Cadastro inicial",
-    [currentStep]
-  );
+  const currentStepLabel =
+    PATIENT_STEPS.find((step) => step.key === currentStep)?.label || "Cadastro inicial";
 
-  const progress = useMemo(
-    () => progressPercent(form.etapas, form.exige_nf),
-    [form.etapas, form.exige_nf]
-  );
+  const progress = (() => {
+    const relevant = PATIENT_STEPS.filter((step) => !step.optional || form.exige_nf);
+    const done = relevant.filter((step) => form.etapas[step.key]).length;
+    return relevant.length ? Math.round((done / relevant.length) * 100) : 0;
+  })();
 
   const setField = (k: "nome_completo" | "celular" | "cpf" | "observacoes", v: string) => {
     setForm((prev) => ({ ...prev, [k]: v }));
@@ -299,8 +272,9 @@ function CadastroPaciente() {
       setMsg({ type: "ok", text: "Paciente salvo." });
       setTimeout(() => setMsg(null), 2500);
       resetForm();
-    } catch (e: any) {
-      setMsg({ type: "err", text: e?.message || "Erro inesperado." });
+    } catch (error: unknown) {
+      const text = error instanceof Error && error.message ? error.message : "Erro inesperado.";
+      setMsg({ type: "err", text });
     } finally {
       setLoading(false);
     }
@@ -309,35 +283,37 @@ function CadastroPaciente() {
   return (
     <section className={UI.page} style={{ background: T.bg, color: T.text }}>
       <div className={UI.container}>
-        <div className={cx(UI.header, "p-4 sm:p-5 rounded-lg")} style={{ borderColor: T.border, background: T.card }}>
+        <div className={cx(UI.header, "p-4 sm:p-5")} style={{ borderColor: T.border, background: T.card }}>
           <div className="flex items-start justify-between gap-4 flex-wrap">
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <div className={UI.headerTitle} style={{ color: T.text }}>
                 Cadastro de paciente
               </div>
-              <div className={cx(UI.headerSub, "mt-1")} style={{ color: T.text3 }}>
+              <div className={cx(UI.headerSub, "mt-2 max-w-4xl")} style={{ color: T.text3 }}>
                 Cadastre o paciente com <span style={{ color: T.text2, fontWeight: 600 }}>nome completo</span>
-                {' '}(obrigatório), e preencha <span style={{ color: T.text2, fontWeight: 600 }}>celular</span>
-                {' '}e <span style={{ color: T.text2, fontWeight: 600 }}>CPF</span> apenas se quiser. Depois,
+                {" "}(obrigatório), e preencha <span style={{ color: T.text2, fontWeight: 600 }}>celular</span>
+                {" "}e <span style={{ color: T.text2, fontWeight: 600 }}>CPF</span> apenas se quiser. Depois,
                 defina o avanço inicial no fluxo de atendimento.
               </div>
 
-              <div className="mt-3 flex flex-wrap items-center gap-2">
+              {/* <div className="mt-3 flex flex-wrap items-center gap-2">
                 <Pill>Paciente: {form.nome_completo || "Não informado"}</Pill>
                 <Pill>Etapa atual: {currentStepLabel}</Pill>
                 <Pill>Progresso: {progress}%</Pill>
-              </div>
+              </div> */}
             </div>
 
-            <div className="flex items-center gap-2">
-              <Pill>{loading ? "Salvando…" : "Pronto para cadastro"}</Pill>
-            </div>
+            {/* <div className="flex items-center gap-2 w-full sm:w-auto">
+              <div className="w-full sm:w-auto">
+                <Pill>{loading ? "Salvando…" : "Pronto para cadastro"}</Pill>
+              </div>
+            </div> */}
           </div>
         </div>
 
         <div className="mt-4 grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
-          <aside className="lg:col-span-4 xl:col-span-3">
-            <div className={cx(UI.section, "p-4 rounded-lg")} style={{ borderColor: T.border, background: T.card }}>
+          <aside className="lg:col-span-4 xl:col-span-3 order-1 lg:order-1">
+            <div className={cx(UI.section, "p-4 sm:p-5")} style={{ borderColor: T.border, background: T.card }}>
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <div className={UI.sectionTitle} style={{ color: T.text }}>
@@ -354,11 +330,11 @@ function CadastroPaciente() {
                   <label className={UI.label} style={{ color: T.text2 }}>
                     Nome completo
                   </label>
-                  <div className="relative mt-1">
+                  <div className="relative mt-1.5">
                     <input
                       value={form.nome_completo}
                       onChange={(e) => setField("nome_completo", e.target.value)}
-                      className={cx(UI.input, "rounded-md pl-10")}
+                      className={cx(UI.input, "pl-10")}
                       style={{ borderColor: T.border }}
                       placeholder="Digite o nome completo"
                     />
@@ -370,11 +346,11 @@ function CadastroPaciente() {
                   <label className={UI.label} style={{ color: T.text2 }}>
                     Número de celular (opcional)
                   </label>
-                  <div className="relative mt-1">
+                  <div className="relative mt-1.5">
                     <input
                       value={form.celular}
                       onChange={(e) => setField("celular", maskPhone(e.target.value))}
-                      className={cx(UI.input, "rounded-md pl-10")}
+                      className={cx(UI.input, "pl-10")}
                       style={{ borderColor: T.border }}
                       placeholder="(11) 99999-9999"
                       inputMode="tel"
@@ -387,11 +363,11 @@ function CadastroPaciente() {
                   <label className={UI.label} style={{ color: T.text2 }}>
                     CPF (opcional)
                   </label>
-                  <div className="relative mt-1">
+                  <div className="relative mt-1.5">
                     <input
                       value={form.cpf}
                       onChange={(e) => setField("cpf", maskCPF(e.target.value))}
-                      className={cx(UI.input, "rounded-md pl-10")}
+                      className={cx(UI.input, "pl-10")}
                       style={{ borderColor: T.border }}
                       placeholder="000.000.000-00"
                       inputMode="numeric"
@@ -400,19 +376,19 @@ function CadastroPaciente() {
                   </div>
                 </div>
 
-                <div className="p-3 border rounded-md" style={{ borderColor: T.border, background: T.mutedBg }}>
+                <div className="p-3 sm:p-4 border rounded-xl" style={{ borderColor: T.border, background: T.mutedBg }}>
                   <label className="flex items-start gap-3 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={form.exige_nf}
                       onChange={(e) => setForm((prev) => ({ ...prev, exige_nf: e.target.checked }))}
-                      className="mt-0.5"
+                      className="mt-0.5 shrink-0"
                     />
                     <div>
                       <div className="text-[11px] font-medium" style={{ color: T.text2 }}>
                         Exigir entrega de NF
                       </div>
-                      <div className="mt-1 text-xs" style={{ color: T.text3 }}>
+                      <div className="mt-1 text-xs leading-5" style={{ color: T.text3 }}>
                         Ative esta opção quando a etapa de nota fiscal for aplicável ao paciente.
                       </div>
                     </div>
@@ -422,8 +398,8 @@ function CadastroPaciente() {
             </div>
           </aside>
 
-          <main className="lg:col-span-8 xl:col-span-9">
-            <div className={cx(UI.section, "p-4 rounded-lg")} style={{ borderColor: T.border, background: T.card }}>
+          <main className="lg:col-span-8 xl:col-span-9 order-2 lg:order-2">
+            <div className={cx(UI.section, "p-4 sm:p-5")} style={{ borderColor: T.border, background: T.card }}>
               <div className="flex items-start justify-between gap-3 flex-wrap">
                 <div>
                   <div className={UI.sectionTitle} style={{ color: T.text }}>
@@ -436,49 +412,8 @@ function CadastroPaciente() {
               </div>
 
               <div className="mt-4 grid grid-cols-1 lg:grid-cols-12 gap-4">
-                <div className="lg:col-span-7">
-                  <div className="grid gap-3">
-                    {PATIENT_STEPS.map((step) => {
-                      const disabled = step.optional && !form.exige_nf;
-                      return (
-                        <label
-                          key={step.key}
-                          className="flex items-start gap-3 p-3 border rounded-md"
-                          style={{
-                            borderColor: T.border,
-                            background: disabled
-                              ? "rgba(17,24,39,0.03)"
-                              : form.etapas[step.key]
-                                ? T.accentSoft
-                                : T.cardSoft,
-                            opacity: disabled ? 0.6 : 1,
-                          }}
-                        >
-                          <input
-                            type="checkbox"
-                            checked={disabled ? false : form.etapas[step.key]}
-                            disabled={disabled}
-                            onChange={(e) => setStep(step.key, e.target.checked)}
-                            className="mt-0.5"
-                          />
-                          <div className="min-w-0">
-                            <div className="text-sm font-medium" style={{ color: T.text }}>
-                              {step.label}
-                            </div>
-                            <div className="mt-1 text-xs" style={{ color: T.text3 }}>
-                              {step.optional
-                                ? "Etapa opcional. Só entra no fluxo quando houver necessidade de NF."
-                                : "Etapa padrão do fluxo do paciente."}
-                            </div>
-                          </div>
-                        </label>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                <div className="lg:col-span-5">
-                  <div className="p-4 border rounded-lg h-full" style={{ borderColor: T.border, background: T.cardSoft }}>
+                <div className="lg:col-span-5 order-1 lg:order-2">
+                  <div className="p-4 sm:p-5 border rounded-2xl h-full lg:sticky lg:top-4" style={{ borderColor: T.border, background: T.cardSoft }}>
                     <div className="flex items-center gap-2">
                       <FileCheck2 className="w-4 h-4" style={{ color: T.accent }} />
                       <div className="text-sm font-semibold" style={{ color: T.text }}>
@@ -491,7 +426,7 @@ function CadastroPaciente() {
                         <div className="text-[11px] font-medium" style={{ color: T.text3 }}>
                           Nome completo
                         </div>
-                        <div className="text-sm mt-1" style={{ color: T.text2 }}>
+                        <div className="text-sm mt-1 break-words" style={{ color: T.text2 }}>
                           {form.nome_completo || "—"}
                         </div>
                       </div>
@@ -524,10 +459,11 @@ function CadastroPaciente() {
                       </div>
 
                       <div>
-                        <div className="text-[11px] font-medium" style={{ color: T.text3 }}>
-                          Progresso do fluxo
+                        <div className="flex items-center justify-between gap-3 text-[11px] font-medium" style={{ color: T.text3 }}>
+                          <span>Progresso do fluxo</span>
+                          <span style={{ color: T.text2 }}>{progress}%</span>
                         </div>
-                        <div className="mt-2 h-2 rounded-full overflow-hidden" style={{ background: "rgba(17,24,39,0.08)" }}>
+                        <div className="mt-2 h-2.5 rounded-full overflow-hidden" style={{ background: "rgba(17,24,39,0.08)" }}>
                           <div
                             className="h-full rounded-full transition-all"
                             style={{ width: `${progress}%`, background: T.accent2 }}
@@ -541,57 +477,113 @@ function CadastroPaciente() {
                   </div>
                 </div>
 
-                <div className="lg:col-span-12">
+                <div className="lg:col-span-7 order-2 lg:order-1">
+                  <div className="grid gap-3">
+                    {PATIENT_STEPS.map((step) => {
+                      const disabled = step.optional && !form.exige_nf;
+                      return (
+                        <label
+                          key={step.key}
+                          className="flex items-start gap-3 p-3 sm:p-4 border rounded-xl"
+                          style={{
+                            borderColor: T.border,
+                            background: disabled
+                              ? "rgba(17,24,39,0.03)"
+                              : form.etapas[step.key]
+                                ? T.accentSoft
+                                : T.cardSoft,
+                            opacity: disabled ? 0.6 : 1,
+                          }}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={disabled ? false : form.etapas[step.key]}
+                            disabled={disabled}
+                            onChange={(e) => setStep(step.key, e.target.checked)}
+                            className="mt-0.5 shrink-0"
+                          />
+                          <div className="min-w-0">
+                            <div className="text-sm font-medium leading-5" style={{ color: T.text }}>
+                              {step.label}
+                            </div>
+                            <div className="mt-1 text-xs leading-5" style={{ color: T.text3 }}>
+                              {step.optional
+                                ? "Etapa opcional. Só entra no fluxo quando houver necessidade de NF."
+                                : "Etapa padrão do fluxo do paciente."}
+                            </div>
+                          </div>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="lg:col-span-12 order-3">
                   <label className={UI.label} style={{ color: T.text2 }}>
                     Observações
                   </label>
                   <textarea
                     value={form.observacoes}
                     onChange={(e) => setField("observacoes", e.target.value)}
-                    className={cx(UI.textarea, "mt-1 rounded-md")}
+                    className={cx(UI.textarea, "mt-1.5")}
                     style={{ borderColor: T.border }}
                     placeholder="Observações do atendimento, informações complementares, pendências ou orientações..."
                   />
                 </div>
 
-                <div className="lg:col-span-12 flex items-center justify-end gap-3 flex-wrap mt-2">
-                  <Btn tone="secondary" onClick={resetForm} disabled={loading}>
+                <div className="lg:col-span-12 ">
+                  <MsgBox m={msg} />
+                </div>
+
+                <div
+                  className="lg:col-span-12 order-5 sticky bottom-0 -mx-4 sm:-mx-5 px-4 sm:px-5 py-3 border-t bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80 flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3 mt-1"
+                  style={{ borderColor: T.border, paddingBottom: "max(12px, env(safe-area-inset-bottom))" }}
+                >
+                  <Btn tone="secondary" onClick={resetForm} disabled={loading} className="w-full sm:w-auto">
                     Limpar
                   </Btn>
-                  <Btn tone="primary" onClick={submit} disabled={loading} loading={loading}>
+                  <Btn tone="primary" onClick={submit} disabled={loading} loading={loading} className="w-full sm:w-auto">
                     Salvar paciente
                   </Btn>
                 </div>
-
-                <div className="lg:col-span-12">
-                  <MsgBox m={msg} />
-                </div>
               </div>
-
             </div>
-            {/* <div className="bg-[#baa391] p-10 flex items-center justify-center rounded-b-lg">
-              <Image
-                src="/logo2.png"
-                alt="BD Odontologia"
-                width={140}
-                height={140}
-                priority
-              />
-            </div> */}
           </main>
         </div>
       </div>
-      <div className="bg-[#baa391] p-3 gap-4 flex items-center justify-center rounded-b-lg">
+
+      <div
+        className="bg-[#baa391] p-8 flex items-center justify-center rounded-t-2xl"
+        style={{
+          paddingTop: "18px",
+          paddingBottom: "max(18px, env(safe-area-inset-bottom))",
+          paddingLeft: "16px",
+          paddingRight: "16px",
+        }}
+      >
         <Image
           src="/logo2.png"
           alt="BD Odontologia"
-          width={50}
-          height={50}
+          width={72}
+          height={72}
           priority
+          className="h-auto w-[64px] sm:w-[72px]"
         />
       </div>
 
       <style jsx global>{`
+        html,
+        body {
+          overflow-x: hidden;
+        }
+
+        input,
+        textarea,
+        select,
+        button {
+          -webkit-tap-highlight-color: transparent;
+        }
+
         input:focus,
         textarea:focus,
         select:focus {

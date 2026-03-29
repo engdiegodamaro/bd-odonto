@@ -23,7 +23,7 @@ export type DriveRow = {
   created_at?: string | null;
 };
 
-const escapeCsv = (v: any) => {
+const escapeCsv = (v: unknown) => {
   const s = (v ?? "").toString();
   return `"${s.replaceAll('"', '""')}"`;
 };

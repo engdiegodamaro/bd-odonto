@@ -34,6 +34,7 @@ import {
     Download,
     Calendar,
     ListCheck,
+    type LucideIcon,
 } from "lucide-react";
 
 import { BasePacientesPage } from "@/components/Pacientes/BasePacientesPage";
@@ -42,10 +43,26 @@ import { VisualizacaoPacientesPage } from "@/components/Pacientes/VisualizacaoPa
 /* =========================================================
    TYPES / DATA
 ========================================================= */
-type NavItem = { id: string; title: string; group: string; icon?: any; src?: string };
+type NavItem = { id: string; title: string; group: string; icon?: LucideIcon; src?: string };
 type RecentItem = { id: string; t: number };
 type CourseItem = { id: string; title: string; description?: string; vimeoId?: string; formUrl?: string };
 type OpenMenu = null | "operacao" | "manutencao" | "compras" | "cursos";
+type PortalUser = {
+    id?: string;
+    client_id?: string;
+    empresa?: string;
+    name?: string;
+    login?: string;
+    access?: unknown;
+    stats?: unknown;
+    created_at?: string;
+};
+type LoginCssVars = React.CSSProperties & {
+    "--accent": string;
+    "--accentDark": string;
+    "--accent-rgb": string;
+    "--tw-ring-color": string;
+};
 
 const COURSES_MENU_ID = "cursos";
 
@@ -153,11 +170,21 @@ function useLockBodyScroll(locked: boolean) {
     }, [locked]);
 }
 
-function useOutsideClose(open: boolean, onClose: () => void, nodes: Array<HTMLElement | null>) {
+function useOutsideClose(
+    open: boolean,
+    onClose: () => void,
+    refs: Array<React.RefObject<HTMLElement | null>>
+) {
     const onCloseRef = useRef(onClose);
+    const refsRef = useRef(refs);
+
     useEffect(() => {
         onCloseRef.current = onClose;
     }, [onClose]);
+
+    useEffect(() => {
+        refsRef.current = refs;
+    }, [refs]);
 
     useEffect(() => {
         if (!open) return;
@@ -165,7 +192,7 @@ function useOutsideClose(open: boolean, onClose: () => void, nodes: Array<HTMLEl
         const onDown = (e: PointerEvent) => {
             const t = e.target as Node | null;
             if (!t) return;
-            const inside = nodes.some((n) => n && n.contains(t));
+            const inside = refsRef.current.some((ref) => ref.current?.contains(t));
             if (!inside) onCloseRef.current();
         };
 
@@ -179,27 +206,25 @@ function useOutsideClose(open: boolean, onClose: () => void, nodes: Array<HTMLEl
             window.removeEventListener("pointerdown", onDown, true);
             window.removeEventListener("keydown", onKey);
         };
-    }, [open, nodes]);
+    }, [open]);
 }
 
 function useMediaQuery(query: string) {
     const [matches, setMatches] = useState(false);
+
     useEffect(() => {
         if (typeof window === "undefined") return;
         const m = window.matchMedia(query);
         const apply = () => setMatches(m.matches);
         apply();
-        // @ts-ignore
-        if (m.addEventListener) m.addEventListener("change", apply);
-        // @ts-ignore
-        else m.addListener(apply);
+
+        m.addEventListener("change", apply);
+
         return () => {
-            // @ts-ignore
-            if (m.removeEventListener) m.removeEventListener("change", apply);
-            // @ts-ignore
-            else m.removeListener(apply);
+            m.removeEventListener("change", apply);
         };
     }, [query]);
+
     return matches;
 }
 
@@ -443,7 +468,7 @@ function TopDropdown({
             setStickyByClick?.(false);
             onClose();
         },
-        [rootRef.current]
+        [rootRef]
     );
 
     if (!items.length) return null;
@@ -798,10 +823,8 @@ function Drawer({
    COMPONENT
 ========================================================= */
 export default function PortalClient() {
-    const mdUp = useMediaQuery("(min-width: 768px)");
-
     const [booting, setBooting] = useState(true);
-    const [user, setUser] = useState<any>(null);
+    const [user, setUser] = useState<PortalUser | null>(null);
 
     // login
     const [login, setLogin] = useState("");
@@ -823,7 +846,7 @@ export default function PortalClient() {
     const [searchOpen, setSearchOpen] = useState(false);
     const searchWrapRef = useRef<HTMLDivElement | null>(null);
     const searchInputRef = useRef<HTMLInputElement | null>(null);
-    useOutsideClose(searchOpen, () => setSearchOpen(false), [searchWrapRef.current]);
+    useOutsideClose(searchOpen, () => setSearchOpen(false), [searchWrapRef]);
 
     // reset pass
     const [showReset, setShowReset] = useState(false);
@@ -868,7 +891,7 @@ export default function PortalClient() {
     // restore session
     useEffect(() => {
         try {
-            const savedUser = safeJsonParse<any>(localStorage.getItem(STORAGE.user));
+            const savedUser = safeJsonParse<PortalUser>(localStorage.getItem(STORAGE.user));
             const savedTab = localStorage.getItem(STORAGE.activeTab);
             const savedCourse = localStorage.getItem(STORAGE.courseIndex);
 
@@ -1137,6 +1160,12 @@ export default function PortalClient() {
             return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
         };
         const rgb = hexToRgb(accent);
+        const loginVars: LoginCssVars = {
+            "--accent": accent,
+            "--accentDark": accentDark,
+            "--accent-rgb": `${rgb.r} ${rgb.g} ${rgb.b}`,
+            "--tw-ring-color": `rgb(var(--accent-rgb) / 0.28)`,
+        };
 
         const inputBase =
             "w-full h-11 rounded-xl  text-slate-900 placeholder:text-slate-400 " +
@@ -1146,14 +1175,7 @@ export default function PortalClient() {
         return (
             <div
                 className="relative min-h-[100svh] supports-[height:100dvh]:min-h-[100dvh] w-full overflow-hidden"
-                style={
-                    {
-                        ["--accent" as any]: accent,
-                        ["--accentDark" as any]: accentDark,
-                        ["--accent-rgb" as any]: `${rgb.r} ${rgb.g} ${rgb.b}`,
-                        ["--tw-ring-color" as any]: `rgb(var(--accent-rgb) / 0.28)`,
-                    } as React.CSSProperties
-                }
+                style={loginVars}
             >
                 {/* VIDEO FUNDO */}
                 {/* <video
@@ -1446,7 +1468,7 @@ export default function PortalClient() {
                         <Image src="/bg.png" alt="AYA" width={40} height={40} />
                         <div className="hidden sm:flex flex-col text-left leading-tight">
                             <div className="text-[13px] font-semibold text-white">BD Odontologia</div>
-                            <div className="text-[11px] text-white/65">Dra Bruna D'Amaro Dosi</div>
+                            <div className="text-[11px] text-white/65">Dra Bruna D&apos;Amaro Dosi</div>
                         </div>
                     </button>
 

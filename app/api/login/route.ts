@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 
-function normalizeStats(value: any): string[] {
+function normalizeStats(value: unknown): string[] {
   if (!value) return [];
   if (Array.isArray(value)) return value.filter(Boolean).map(String);
 

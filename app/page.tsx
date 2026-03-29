@@ -9,7 +9,6 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
-  Clock3,
   Instagram,
   MapPin,
   Menu,
@@ -28,6 +27,11 @@ const WHATSAPP_URL =
 const ADDRESS = "Rua Bom Pastor, 2444 - Ipiranga, São Paulo - SP, sala 1403";
 const PHONE_LABEL = "(11) 97305-8848";
 
+const LAYOUT = {
+  container: "mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8",
+  section: "py-14 sm:py-20",
+} as const;
+
 const cx = (...parts: Array<string | false | null | undefined>) => parts.filter(Boolean).join(" ");
 
 type Treatment = {
@@ -42,14 +46,6 @@ type Treatment = {
 type Photo = {
   src: string;
   title: string;
-};
-
-
-type BeforeAfterCase = {
-  title: string;
-  subtitle: string;
-  before: string;
-  after: string;
 };
 
 const navItems = [
@@ -101,55 +97,6 @@ const officePhotos: Photo[] = [
   { src: "/consultorio-2.png", title: "Consultório" },
   { src: "/consultorio-3.png", title: "Detalhes do espaço" },
   { src: "/consultorio-4.png", title: "Ambiente da clínica" },
-];
-
-const highlights = [
-  "Atendimento com horário agendado",
-  "Planejamento individualizado",
-  "Orientação clara em cada etapa",
-];
-
-
-const beforeAfterCases: BeforeAfterCase[] = [
-  {
-    title: "Lentes ou facetas",
-    subtitle: "Evolução com mais luminosidade e naturalidade no sorriso.",
-    before: "/antes-1.png",
-    after: "/depois-1.png",
-  },
-  {
-    title: "Reabilitação estética",
-    subtitle: "Melhora da harmonia do sorriso com planejamento individualizado.",
-    before: "/antes-2.png",
-    after: "/depois-2.png",
-  },
-  {
-    title: "Protose total e protocolo",
-    subtitle: "Acompanhamento do tratamento com foco em função e estética.",
-    before: "/antes-4.png",
-    after: "/depois-4.png",
-  },
-  {
-    title: "Reabilitação Oral",
-    subtitle: "Resultado planejado para valorizar o sorriso com equilíbrio.",
-    before: "/antes-3.png",
-    after: "/depois-3.png",
-  },
-];
-
-const reasons = [
-  {
-    title: "Escuta e atenção",
-    text: "Cada atendimento é conduzido com acolhimento, clareza e foco real na necessidade do paciente.",
-  },
-  {
-    title: "Tratamento planejado",
-    text: "A clínica une saúde, função e estética para construir um cuidado mais seguro e consistente.",
-  },
-  {
-    title: "Experiência mais tranquila",
-    text: "Ambiente agradável, atendimento próximo e um processo pensado para transmitir confiança.",
-  },
 ];
 
 const steps = [
@@ -219,7 +166,7 @@ function SectionHeader({
   return (
     <div className="max-w-2xl">
       <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#8B7C72] sm:text-xs">{overline}</p>
-      <h2 className="mt-4 text-3xl leading-tight text-[#2D2825] sm:text-4xl">{title}</h2>
+      <h2 className="mt-4 text-[clamp(1.75rem,7vw,2.35rem)] leading-[1.08] text-[#2D2825] sm:text-4xl">{title}</h2>
       <p className="mt-4 text-sm leading-7 text-[#6A605A] sm:text-base">{description}</p>
     </div>
   );
@@ -245,6 +192,15 @@ export default function BDOdontologiaPage() {
     };
   }, []);
 
+  useEffect(() => {
+    if (!menuOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [menuOpen]);
+
   const selectedTreatment = useMemo(
     () => treatments.find((item) => item.id === activeTreatment) ?? treatments[0],
     [activeTreatment],
@@ -256,7 +212,7 @@ export default function BDOdontologiaPage() {
   const nextPhoto = () => setActivePhoto((value) => (value + 1) % officePhotos.length);
 
   return (
-    <main className="min-h-screen overflow-x-hidden bg-[#F8F4F0] text-[#2D2825]">
+    <main className="min-h-screen overflow-x-hidden bg-[#F8F4F0] pb-[calc(6.5rem+env(safe-area-inset-bottom))] text-[#2D2825] sm:pb-0">
       <div
         className="pointer-events-none fixed inset-x-0 top-0 -z-10 h-[420px]"
         style={{
@@ -265,8 +221,11 @@ export default function BDOdontologiaPage() {
         }}
       />
 
-      <header className="sticky top-0 z-40 border-b border-[#EAE0D8] bg-[#F8F4F0]/88 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
+      <header
+        className="sticky top-0 z-40 border-b border-[#EAE0D8] bg-[#F8F4F0]/88 backdrop-blur-xl"
+        style={{ paddingTop: "env(safe-area-inset-top)" }}
+      >
+        <div className={cx(LAYOUT.container, "flex items-center justify-between gap-3 py-3.5 sm:gap-4 sm:py-4")}>
           <Link href="#inicio" className="flex min-w-0 items-center gap-3">
             <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-full border border-[#E3D6CC] bg-white">
               <Image src="/logo2.png" alt="Logo BD Odontologia" fill className="object-cover" />
@@ -313,7 +272,12 @@ export default function BDOdontologiaPage() {
 
         {menuOpen && (
           <div className="border-t border-[#E7D9CF] bg-[#F8F4F0] lg:hidden">
-            <div className="mx-auto flex max-w-7xl flex-col gap-2 px-5 py-4">
+            <div
+              className={cx(
+                LAYOUT.container,
+                "flex max-h-[70svh] flex-col gap-2 overflow-y-auto py-4 pb-[calc(1rem+env(safe-area-inset-bottom))]",
+              )}
+            >
               {navItems.map((item) => (
                 <Link
                   key={item.href}
@@ -341,7 +305,10 @@ export default function BDOdontologiaPage() {
         )}
       </header>
 
-      <section id="inicio" className="mx-auto max-w-7xl px-4 pb-14 pt-10 sm:px-6 sm:pb-20 lg:px-8 lg:pt-16">
+      <section
+        id="inicio"
+        className={cx(LAYOUT.container, "scroll-mt-24 pb-14 pt-10 sm:scroll-mt-28 sm:pb-20 lg:pt-16")}
+      >
         <div className="grid items-center gap-8 lg:grid-cols-[1.04fr_0.96fr] xl:gap-14">
           <div>
             <div className="inline-flex items-center gap-2 rounded-full border border-[#E4D8CE] bg-white px-4 py-2 text-sm text-[#786B64] shadow-sm">
@@ -349,11 +316,11 @@ export default function BDOdontologiaPage() {
               Avaliação com horário agendado
             </div>
 
-            <h1 className="mt-6 max-w-4xl text-4xl leading-[1.02] text-[#2D2825] sm:text-5xl lg:text-6xl">
+            <h1 className="mt-6 max-w-4xl text-[clamp(2rem,9vw,3.75rem)] leading-[1.05] text-[#2D2825]">
               Cuidado odontológico com atenção aos detalhes, conforto e confiança em cada etapa.
             </h1>
 
-            <p className="mt-5 max-w-2xl text-base leading-8 text-[#6A605A] md:text-lg">
+            <p className="mt-5 max-w-2xl text-[15px] leading-7 text-[#6A605A] sm:text-base sm:leading-8 md:text-lg">
               Na BD Odontologia, cada tratamento é conduzido com escuta, planejamento individualizado e uma experiência pensada para que você se sinta seguro do início ao fim.
             </p>
 
@@ -389,7 +356,7 @@ export default function BDOdontologiaPage() {
             <div className="absolute -left-4 top-8 hidden h-28 w-28 rounded-full bg-[#D8CCC3]/45 blur-3xl sm:block" />
             <Card className="overflow-hidden border-[#E5D7CC] bg-[linear-gradient(180deg,#FFFFFF_0%,#FBF6F1_100%)] p-3 sm:p-4">
               <div className="relative overflow-hidden rounded-[24px] bg-[#EFE6DF]">
-                <div className="absolute left-4 top-4 z-10 rounded-full bg-white/92 px-4 py-2 text-xs font-medium text-[#5B5049] shadow-sm">
+                <div className="absolute left-3 top-3 z-10 max-w-[80%] rounded-full bg-white/92 px-3 py-1.5 text-[11px] font-medium text-[#5B5049] shadow-sm sm:left-4 sm:top-4 sm:max-w-none sm:px-4 sm:py-2 sm:text-xs">
                   Atendimento acolhedor e planejamento cuidadoso
                 </div>
                 <div className="relative aspect-[4/4.35] sm:aspect-[4/4.6]">
@@ -409,7 +376,7 @@ export default function BDOdontologiaPage() {
         </div>
       </section>
 
-      <section id="tratamentos" className="mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-20 lg:px-8">
+      <section id="tratamentos" className={cx(LAYOUT.container, LAYOUT.section, "scroll-mt-24 sm:scroll-mt-28")}>
         <div className="grid gap-8 lg:grid-cols-[0.92fr_1.08fr] lg:items-start">
           <SectionHeader
             overline="Tratamentos"
@@ -418,7 +385,8 @@ export default function BDOdontologiaPage() {
           />
 
           <Card className="p-4 sm:p-6">
-            <div className="flex flex-wrap gap-2.5">
+            <p className="text-[11px] font-medium text-[#8B7C72] sm:hidden">Toque para trocar a especialidade</p>
+            <div className="mt-3 grid grid-cols-2 gap-2.5 sm:mt-0 sm:flex sm:flex-wrap sm:gap-2.5">
               {treatments.map((item) => {
                 const Icon = item.icon;
                 const isActive = item.id === selectedTreatment.id;
@@ -428,11 +396,12 @@ export default function BDOdontologiaPage() {
                     type="button"
                     onClick={() => setActiveTreatment(item.id)}
                     className={cx(
-                      "inline-flex items-center gap-2 rounded-full border px-4 py-2.5 text-sm font-medium transition",
+                      "inline-flex w-full items-center justify-center gap-2 rounded-2xl border px-3 py-3 text-[13px] font-medium transition sm:w-auto sm:rounded-full sm:px-4 sm:py-2.5 sm:text-sm",
                       isActive
                         ? "border-[#BAA391] bg-[#EDE2D9] text-[#5A4A40] shadow-[0_16px_34px_rgba(126,98,79,0.10)]"
                         : "border-[#E6D9D0] bg-[#FCFAF8] text-[#5D524B] hover:bg-white",
                     )}
+                    aria-pressed={isActive}
                   >
                     <Icon className="h-4 w-4" />
                     {item.label}
@@ -441,23 +410,26 @@ export default function BDOdontologiaPage() {
               })}
             </div>
 
-            <div className="mt-6 grid gap-6 rounded-[24px] bg-[#FBF8F5] p-5 sm:p-6 lg:grid-cols-[0.95fr_1.05fr]">
+            <div className="mt-5 grid gap-5 rounded-[22px] bg-[#FBF8F5] p-4 sm:mt-6 sm:gap-6 sm:rounded-[24px] sm:p-6 lg:grid-cols-[0.95fr_1.05fr]">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[#8B7C72]">{selectedTreatment.label}</p>
-                <h3 className="mt-3 text-2xl leading-tight text-[#2D2825] sm:text-[30px]">{selectedTreatment.title}</h3>
-                <p className="mt-4 text-sm leading-7 text-[#6B615B] sm:text-base">{selectedTreatment.text}</p>
+                <h3 className="mt-2 text-[1.65rem] leading-[1.1] text-[#2D2825] sm:mt-3 sm:text-[30px]">{selectedTreatment.title}</h3>
+                <p className="mt-3 text-sm leading-7 text-[#6B615B] sm:mt-4 sm:text-base">{selectedTreatment.text}</p>
                 <ExternalAnchor
                   href={WHATSAPP_URL}
-                  className="mt-5 inline-flex items-center gap-2 rounded-full border border-[#DCCEC4] bg-white px-4 py-2.5 text-sm font-medium text-[#5B5049] transition hover:bg-[#F5F0EB]"
+                  className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full border border-[#DCCEC4] bg-white px-4 py-3 text-sm font-medium text-[#5B5049] transition hover:bg-[#F5F0EB] sm:mt-5 sm:w-auto sm:py-2.5"
                 >
                   Solicitar avaliação
                   <ArrowRight className="h-4 w-4" />
                 </ExternalAnchor>
               </div>
 
-              <div className="grid gap-3 sm:grid-cols-2">
+              <div className="grid gap-2.5 sm:grid-cols-2 sm:gap-3">
                 {selectedTreatment.items.map((item) => (
-                  <div key={item} className="rounded-[20px] border border-[#E8DDD4] bg-white px-4 py-4 text-sm font-medium text-[#3D342F]">
+                  <div
+                    key={item}
+                    className="rounded-[18px] border border-[#E8DDD4] bg-white px-3.5 py-3.5 text-[13px] font-medium leading-5 text-[#3D342F] sm:rounded-[20px] sm:px-4 sm:py-4 sm:text-sm"
+                  >
                     {item}
                   </div>
                 ))}
@@ -467,7 +439,7 @@ export default function BDOdontologiaPage() {
         </div>
       </section>
 
-      <section id="profissional" className="mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-20 lg:px-8">
+      <section id="profissional" className={cx(LAYOUT.container, LAYOUT.section, "scroll-mt-24 sm:scroll-mt-28")}>
         <Card className="overflow-hidden">
           <div className="grid gap-0 lg:grid-cols-[0.88fr_1.12fr]">
             <div className="relative min-h-[360px] bg-[#EDE3DB]">
@@ -502,7 +474,7 @@ export default function BDOdontologiaPage() {
         </Card>
       </section>
 
-      <section id="consultorio" className="mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-20 lg:px-8">
+      <section id="consultorio" className={cx(LAYOUT.container, LAYOUT.section, "scroll-mt-24 sm:scroll-mt-28")}>
         <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
           <SectionHeader
             overline="Consultório"
@@ -544,7 +516,7 @@ export default function BDOdontologiaPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-4 gap-3 lg:grid-cols-1">
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-1">
                 {officePhotos.map((photo, index) => (
                   <button
                     key={photo.src}
@@ -616,7 +588,7 @@ export default function BDOdontologiaPage() {
         </div>
       </section> */}
 
-      <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-20 lg:px-8">
+      <section className={cx(LAYOUT.container, LAYOUT.section)}>
         <div className="grid gap-6 lg:grid-cols-[0.92fr_1.08fr]">
           <SectionHeader
             overline="Como funciona"
@@ -638,7 +610,10 @@ export default function BDOdontologiaPage() {
         </div>
       </section>
 
-      <section id="contato" className="mx-auto max-w-7xl px-4 pb-16 pt-2 sm:px-6 sm:pb-24 lg:px-8">
+      <section
+        id="contato"
+        className={cx(LAYOUT.container, "scroll-mt-24 pb-16 pt-2 sm:scroll-mt-28 sm:pb-24")}
+      >
         <Card className="overflow-hidden border-[#DCCDBF] bg-[linear-gradient(135deg,#BAA391_0%,#C7B3A4_100%)] text-[#2D2825]">
           <div className="grid gap-0 lg:grid-cols-[0.92fr_1.08fr]">
             <div className="p-6 sm:p-8 lg:p-10">
@@ -707,9 +682,22 @@ export default function BDOdontologiaPage() {
         </Card>
       </section>
 
+      <div
+        className="fixed inset-x-4 z-50 sm:hidden"
+        style={{ bottom: "calc(0.75rem + env(safe-area-inset-bottom))" }}
+      >
+        <ExternalAnchor
+          href={WHATSAPP_URL}
+          className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-[#BAA391] px-5 py-3.5 text-sm font-semibold text-white shadow-[0_18px_40px_rgba(126,98,79,0.26)] transition active:scale-[0.99]"
+        >
+          <Phone className="h-4 w-4" />
+          Agendar no WhatsApp
+        </ExternalAnchor>
+      </div>
+
       <ExternalAnchor
         href={WHATSAPP_URL}
-        className="fixed bottom-5 right-5 z-50 inline-flex items-center gap-2 rounded-full bg-[#BAA391] px-4 py-3 text-sm font-semibold text-white shadow-[0_18px_40px_rgba(126,98,79,0.26)] transition hover:-translate-y-0.5 hover:bg-[#A28D7D]"
+        className="fixed bottom-5 right-5 z-50 hidden items-center gap-2 rounded-full bg-[#BAA391] px-4 py-3 text-sm font-semibold text-white shadow-[0_18px_40px_rgba(126,98,79,0.26)] transition hover:-translate-y-0.5 hover:bg-[#A28D7D] sm:inline-flex"
       >
         <Phone className="h-4 w-4" />
         WhatsApp

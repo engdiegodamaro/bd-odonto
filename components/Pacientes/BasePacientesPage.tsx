@@ -1,19 +1,19 @@
 "use client";
+
 import Image from "next/image";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
+  AlertTriangle,
   ChevronRight,
-  FileCheck2,
-  Phone,
+  ClipboardList,
+  FileText,
   IdCard,
+  Loader2,
+  Phone,
   Search,
+  Trash2,
   UserRound,
   X,
-  Loader2,
-  FileText,
-  ClipboardList,
-  Trash2,
-  AlertTriangle,
 } from "lucide-react";
 
 const cx = (...p: Array<string | false | null | undefined>) => p.filter(Boolean).join(" ");
@@ -31,12 +31,12 @@ const T = {
 
   accent: "#baa391",
   accent2: "#baa391",
-  accentSoft: "rgba(190, 142, 87, 0.17)",
-  accentRing: "rgba(17, 89, 35, 0.18)",
+  accentSoft: "rgba(186, 163, 145, 0.17)",
+  accentRing: "rgba(186, 163, 145, 0.28)",
 
   okBg: "rgba(16, 185, 129, 0.10)",
   okBd: "rgba(16, 185, 129, 0.30)",
-  okTx: "#baa391",
+  okTx: "#8D7461",
 
   errBg: "rgba(239, 68, 68, 0.10)",
   errBd: "rgba(239, 68, 68, 0.30)",
@@ -45,21 +45,20 @@ const T = {
 
 const UI = {
   page: "w-full min-w-0",
-  container: "mx-auto w-full max-w-[1480px] px-4 sm:px-6 py-6",
+  container: "mx-auto w-full max-w-[1480px] px-3 sm:px-6 py-4 sm:py-6",
   header: "border bg-white",
   section: "border bg-white",
   headerTitle: "text-base sm:text-lg font-semibold tracking-tight",
-  headerSub: "text-xs",
+  headerSub: "text-xs leading-5",
   sectionTitle: "text-sm font-semibold",
-  sectionHint: "text-xs",
+  sectionHint: "text-xs leading-5",
   label: "text-[11px] font-medium",
-  help: "text-[11px]",
   input:
-    "w-full h-10 px-3 border bg-white text-sm outline-none transition focus:ring-2 rounded-md",
+    "w-full h-11 px-3 border bg-white text-sm outline-none transition rounded-xl",
   textarea:
-    "w-full min-h-[110px] px-3 py-2 border bg-white text-sm outline-none transition focus:ring-2 rounded-md",
+    "w-full min-h-[120px] px-3 py-3 border bg-white text-sm outline-none transition rounded-xl",
   select:
-    "w-full h-10 px-3 border bg-white text-sm outline-none transition focus:ring-2 rounded-md",
+    "w-full h-11 px-3 border bg-white text-sm outline-none transition rounded-xl",
 } as const;
 
 const PATIENT_STEPS = [
@@ -91,6 +90,11 @@ type Patient = {
   updated_at?: string;
 };
 
+function getErrorMessage(error: unknown, fallback: string) {
+  if (error instanceof Error && error.message) return error.message;
+  return fallback;
+}
+
 function Btn({
   tone = "primary",
   loading,
@@ -103,27 +107,24 @@ function Btn({
   loading?: boolean;
 }) {
   const base =
-    "inline-flex items-center justify-center gap-2 h-10 px-4 text-sm font-semibold border rounded-md " +
+    "inline-flex items-center justify-center gap-2 h-11 px-4 text-sm font-semibold border rounded-xl " +
     "disabled:opacity-50 disabled:cursor-not-allowed transition active:translate-y-[0.5px]";
-
-  const styles =
-    tone === "primary" || tone === "danger" ? "text-white" : tone === "subtleDanger" ? "bg-white" : "bg-white";
 
   return (
     <button
-      className={cx(base, styles, className)}
+      className={cx(base, className)}
       disabled={disabled || loading}
       style={
         tone === "primary"
-          ? { background: T.accent, borderColor: "rgba(17, 89, 35, 0.45)" }
+          ? { background: T.accent, borderColor: "rgba(186, 163, 145, 0.7)", color: "white" }
           : tone === "danger"
-            ? { background: "#DC2626", borderColor: "rgba(220, 38, 38, 0.55)" }
+            ? { background: "#DC2626", borderColor: "rgba(220, 38, 38, 0.55)", color: "white" }
             : tone === "subtleDanger"
               ? {
-                background: "rgba(127, 29, 29, 0.03)",
-                borderColor: "rgba(127, 29, 29, 0.16)",
-                color: "rgba(127, 29, 29, 0.88)",
-              }
+                  background: "rgba(127, 29, 29, 0.03)",
+                  borderColor: "rgba(127, 29, 29, 0.16)",
+                  color: "rgba(127, 29, 29, 0.88)",
+                }
               : { background: T.card, borderColor: T.border, color: T.text }
       }
       {...props}
@@ -143,11 +144,11 @@ function Btn({
 function Pill({ children, active = false }: { children: React.ReactNode; active?: boolean }) {
   return (
     <span
-      className="inline-flex items-center h-7 px-2.5 text-[11px] font-medium border rounded-md"
+      className="inline-flex items-center min-h-7 px-2.5 py-1 text-[11px] font-medium border rounded-full leading-tight"
       style={{
-        borderColor: active ? "rgba(17, 89, 35, 0.22)" : T.border,
+        borderColor: active ? "rgba(186, 163, 145, 0.35)" : T.border,
         background: active ? T.accentSoft : T.cardSoft,
-        color: active ? T.accent : T.text2,
+        color: active ? "#8D7461" : T.text2,
       }}
     >
       {children}
@@ -163,7 +164,7 @@ function MsgBox({ m }: { m: { type: "ok" | "err"; text: string } | null }) {
       : { background: T.errBg, borderColor: T.errBd, color: T.errTx };
 
   return (
-    <div className="text-sm px-3 py-2 border rounded-md" style={s}>
+    <div className="text-sm px-3 py-2.5 border rounded-xl" style={s}>
       {m.text}
     </div>
   );
@@ -189,18 +190,39 @@ function maskPhone(v: string) {
   return d.replace(/(\d{2})(\d)/, "($1) $2").replace(/(\d{5})(\d)/, "$1-$2");
 }
 
-function normalizeSteps(input: any): PatientSteps {
+function normalizeSteps(input: unknown): PatientSteps {
+  const source = input && typeof input === "object" ? (input as Record<string, unknown>) : {};
+
   return {
-    agendamento: Boolean(input?.agendamento),
-    solicitacao_exames: Boolean(input?.solicitacao_exames),
-    exames_realizados: Boolean(input?.exames_realizados),
-    planejamento_apresentado: Boolean(input?.planejamento_apresentado),
-    planejamento_aprovado: Boolean(input?.planejamento_aprovado),
-    execucao_agendada: Boolean(input?.execucao_agendada),
-    contrato_formalizado: Boolean(input?.contrato_formalizado),
-    termo_conclusao: Boolean(input?.termo_conclusao),
-    entrega_nf: Boolean(input?.entrega_nf),
-    retornos_programados: Boolean(input?.retornos_programados),
+    agendamento: Boolean(source.agendamento),
+    solicitacao_exames: Boolean(source.solicitacao_exames),
+    exames_realizados: Boolean(source.exames_realizados),
+    planejamento_apresentado: Boolean(source.planejamento_apresentado),
+    planejamento_aprovado: Boolean(source.planejamento_aprovado),
+    execucao_agendada: Boolean(source.execucao_agendada),
+    contrato_formalizado: Boolean(source.contrato_formalizado),
+    termo_conclusao: Boolean(source.termo_conclusao),
+    entrega_nf: Boolean(source.entrega_nf),
+    retornos_programados: Boolean(source.retornos_programados),
+  };
+}
+
+function toPatient(row: unknown): Patient {
+  const source = row && typeof row === "object" ? (row as Record<string, unknown>) : {};
+  const etapaAtual = source.etapa_atual;
+  const validStep = PATIENT_STEPS.some((step) => step.key === etapaAtual);
+
+  return {
+    id: String(source.id ?? ""),
+    nome_completo: String(source.nome_completo ?? ""),
+    celular: String(source.celular ?? ""),
+    cpf: String(source.cpf ?? ""),
+    exige_nf: Boolean(source.exige_nf),
+    observacoes: source.observacoes == null ? null : String(source.observacoes),
+    etapa_atual: validStep ? (etapaAtual as StepKey) : null,
+    etapas: normalizeSteps(source.etapas),
+    created_at: typeof source.created_at === "string" ? source.created_at : undefined,
+    updated_at: typeof source.updated_at === "string" ? source.updated_at : undefined,
   };
 }
 
@@ -232,6 +254,11 @@ function progressPercent(steps: PatientSteps, exigeNF: boolean) {
   return relevant.length ? Math.round((done / relevant.length) * 100) : 0;
 }
 
+function isComplete(patient: Pick<Patient, "etapas" | "exige_nf">) {
+  const relevant = PATIENT_STEPS.filter((step) => !step.optional || patient.exige_nf);
+  return relevant.every((step) => patient.etapas[step.key]);
+}
+
 function formatDate(v?: string) {
   if (!v) return "—";
   const d = new Date(v);
@@ -252,6 +279,19 @@ function emptyPatient(): Patient {
   };
 }
 
+function FieldInfo({ label, value }: { label: string; value: React.ReactNode }) {
+  return (
+    <div className="min-w-0">
+      <div className="text-[11px] font-medium" style={{ color: T.text3 }}>
+        {label}
+      </div>
+      <div className="mt-1 text-sm break-words" style={{ color: T.text }}>
+        {value}
+      </div>
+    </div>
+  );
+}
+
 export function BasePacientesPage() {
   const [rows, setRows] = useState<Patient[]>([]);
   const [loading, setLoading] = useState(true);
@@ -265,40 +305,48 @@ export function BasePacientesPage() {
   const [stageFilter, setStageFilter] = useState("todos");
   const [confirmDelete, setConfirmDelete] = useState(false);
 
-  async function loadPatients() {
+  useEffect(() => {
+    if (!drawerOpen) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [drawerOpen]);
+
+  const loadPatients = useCallback(async () => {
     setLoading(true);
     try {
       const res = await fetch("/api/pacientes", { cache: "no-store" });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.error || "Erro ao carregar pacientes.");
 
-      const items = Array.isArray(data?.items)
-        ? data.items.map((row: any) => ({
-          ...row,
-          etapas: normalizeSteps(row.etapas),
-        }))
-        : [];
+      const items: Patient[] = Array.isArray(data?.items) ? data.items.map(toPatient) : [];
 
       setRows(items);
-      if (items.length && !selectedId) setSelectedId(items[0].id);
-    } catch (e: any) {
-      setMsg({ type: "err", text: e?.message || "Erro ao carregar pacientes." });
+      if (items.length) {
+        setSelectedId((currentId) => currentId ?? items[0].id);
+      }
+    } catch (error: unknown) {
+      setMsg({ type: "err", text: getErrorMessage(error, "Erro ao carregar pacientes.") });
     } finally {
       setLoading(false);
     }
-  }
+  }, []);
 
   useEffect(() => {
-    loadPatients();
-  }, []);
+    void loadPatients();
+  }, [loadPatients]);
 
   const filteredRows = useMemo(() => {
     return rows.filter((row) => {
       const matchesQuery = !query
         ? true
         : [row.nome_completo, row.cpf, row.celular]
-          .filter(Boolean)
-          .some((value) => String(value).toLowerCase().includes(query.toLowerCase()));
+            .filter(Boolean)
+            .some((value) => String(value).toLowerCase().includes(query.toLowerCase()));
 
       const rowCurrentStep = getCurrentStep(row.etapas, row.exige_nf);
       const matchesStage = stageFilter === "todos" ? true : rowCurrentStep === stageFilter;
@@ -329,10 +377,7 @@ export function BasePacientesPage() {
 
   const total = rows.length;
   const withNF = rows.filter((r) => r.exige_nf).length;
-  const completed = rows.filter((r) => {
-    const relevant = PATIENT_STEPS.filter((step) => !step.optional || r.exige_nf);
-    return relevant.every((step) => r.etapas[step.key]);
-  }).length;
+  const completed = rows.filter((r) => isComplete(r)).length;
 
   function openRow(row: Patient) {
     setSelectedId(row.id);
@@ -406,8 +451,8 @@ export function BasePacientesPage() {
         observacoes: updated.observacoes || "",
       });
       setMsg({ type: "ok", text: "Paciente atualizado com sucesso." });
-    } catch (e: any) {
-      setMsg({ type: "err", text: e?.message || "Erro ao atualizar paciente." });
+    } catch (error: unknown) {
+      setMsg({ type: "err", text: getErrorMessage(error, "Erro ao atualizar paciente.") });
     } finally {
       setSaving(false);
     }
@@ -441,8 +486,8 @@ export function BasePacientesPage() {
       setConfirmDelete(false);
       setDrawerOpen(false);
       setMsg(null);
-    } catch (e: any) {
-      setMsg({ type: "err", text: e?.message || "Erro ao excluir paciente." });
+    } catch (error: unknown) {
+      setMsg({ type: "err", text: getErrorMessage(error, "Erro ao excluir paciente.") });
     } finally {
       setDeleting(false);
     }
@@ -451,14 +496,18 @@ export function BasePacientesPage() {
   return (
     <section className={UI.page} style={{ background: T.bg, color: T.text }}>
       <div className={UI.container}>
-        <div className={cx(UI.header, "p-4 sm:p-5 rounded-lg")} style={{ borderColor: T.border, background: T.card }}>
+        <div
+          className={cx(UI.header, "p-4 sm:p-5 rounded-2xl")}
+          style={{ borderColor: T.border, background: T.card }}
+        >
           <div className="flex items-start justify-between gap-4 flex-wrap">
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <div className={UI.headerTitle} style={{ color: T.text }}>
                 Base de pacientes
               </div>
-              <div className={cx(UI.headerSub, "mt-1 l")} style={{ color: T.text3 }}>
-                Consulte a base operacional de pacientes, selecione um registro na lista e abra o painel lateral para atualizar dados cadastrais, observações e andamento do fluxo.
+              <div className={cx(UI.headerSub, "mt-1")} style={{ color: T.text3 }}>
+                Consulte a base operacional de pacientes, filtre a lista e abra o painel lateral para atualizar
+                dados cadastrais, observações e andamento do fluxo.
               </div>
 
               <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -468,24 +517,30 @@ export function BasePacientesPage() {
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 w-full sm:w-auto">
               <Pill>{loading ? "Atualizando base…" : `${filteredRows.length} registro(s)`}</Pill>
             </div>
           </div>
         </div>
 
         <div className="mt-4 grid grid-cols-1 gap-4">
-          <div className={cx(UI.section, "p-4 rounded-lg")} style={{ borderColor: T.border, background: T.card }}>
+          <div
+            className={cx(UI.section, "p-3 sm:p-4 rounded-2xl")}
+            style={{ borderColor: T.border, background: T.card }}
+          >
             <div className="flex items-start justify-between gap-4 flex-wrap">
               <div>
                 <div className={UI.sectionTitle} style={{ color: T.text }}>
                   Lista de pacientes
                 </div>
+                <div className={cx(UI.sectionHint, "mt-1")} style={{ color: T.text3 }}>
+                  No celular, os registros aparecem em cartões para facilitar toque, leitura e edição.
+                </div>
               </div>
             </div>
 
-            <div className="mt-4 grid grid-cols-1 md:grid-cols-12 gap-3">
-              <div className="md:col-span-7 lg:col-span-8">
+            <div className="mt-4 grid grid-cols-1 lg:grid-cols-12 gap-3">
+              <div className="lg:col-span-8">
                 <label className={UI.label} style={{ color: T.text2 }}>
                   Buscar por nome, CPF ou celular
                 </label>
@@ -497,15 +552,18 @@ export function BasePacientesPage() {
                     style={{ borderColor: T.border }}
                     placeholder="Pesquisar paciente"
                   />
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: T.text3 }} />
+                  <Search
+                    className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4"
+                    style={{ color: T.text3 }}
+                  />
                 </div>
               </div>
 
-              <div className="md:col-span-5 lg:col-span-4">
+              <div className="lg:col-span-4">
                 <label className={UI.label} style={{ color: T.text2 }}>
                   Etapa atual
                 </label>
-                <div className="py-1">
+                <div className="mt-1">
                   <select
                     value={stageFilter}
                     onChange={(e) => setStageFilter(e.target.value)}
@@ -523,9 +581,105 @@ export function BasePacientesPage() {
               </div>
             </div>
 
-            <div className="mt-4 overflow-hidden rounded-lg border" style={{ borderColor: T.border }}>
+            <div className="mt-4 sm:hidden space-y-3">
+              {loading ? (
+                <div
+                  className="px-4 py-10 text-center text-sm rounded-2xl border"
+                  style={{ color: T.text3, borderColor: T.border, background: T.cardSoft }}
+                >
+                  <span className="inline-flex items-center gap-2">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Carregando pacientes…
+                  </span>
+                </div>
+              ) : filteredRows.length === 0 ? (
+                <div
+                  className="px-4 py-10 text-center text-sm rounded-2xl border"
+                  style={{ color: T.text3, borderColor: T.border, background: T.cardSoft }}
+                >
+                  Nenhum paciente encontrado para os filtros aplicados.
+                </div>
+              ) : (
+                filteredRows.map((row) => {
+                  const selected = row.id === selectedId;
+                  const stepLabel = getCurrentStepLabel(row);
+                  const nextLabel = getNextStepLabel(row);
+                  const rowProgress = progressPercent(row.etapas, row.exige_nf);
+
+                  return (
+                    <button
+                      key={row.id}
+                      type="button"
+                      onClick={() => openRow(row)}
+                      className="w-full text-left rounded-2xl border p-4 transition active:scale-[0.995]"
+                      style={{
+                        borderColor: selected ? "rgba(186, 163, 145, 0.45)" : T.border,
+                        background: selected ? T.accentSoft : T.card,
+                      }}
+                    >
+                      <div className="flex items-start gap-3">
+                        <div
+                          className="w-10 h-10 rounded-xl border flex items-center justify-center shrink-0"
+                          style={{ borderColor: T.border, background: T.cardSoft }}
+                        >
+                          <UserRound className="w-4 h-4" style={{ color: selected ? T.accent : T.text3 }} />
+                        </div>
+
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <div className="text-sm font-semibold truncate" style={{ color: T.text }}>
+                                {row.nome_completo}
+                              </div>
+                              <div className="mt-1 flex flex-wrap gap-2">
+                                <Pill active={selected}>{stepLabel}</Pill>
+                                <Pill>{row.exige_nf ? "NF aplicável" : "Sem NF"}</Pill>
+                              </div>
+                            </div>
+
+                            <ChevronRight className="w-4 h-4 shrink-0 mt-1" style={{ color: T.text3 }} />
+                          </div>
+
+                          <div className="mt-3 grid grid-cols-2 gap-3">
+                            <FieldInfo label="Celular" value={maskPhone(row.celular)} />
+                            <FieldInfo label="CPF" value={maskCPF(row.cpf)} />
+                            <FieldInfo label="Próxima etapa" value={nextLabel} />
+                            <FieldInfo label="Cadastro" value={formatDate(row.created_at)} />
+                          </div>
+
+                          <div className="mt-3">
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="text-[11px] font-medium" style={{ color: T.text3 }}>
+                                Progresso
+                              </div>
+                              <div className="text-[11px] font-medium" style={{ color: T.text2 }}>
+                                {rowProgress}%
+                              </div>
+                            </div>
+                            <div
+                              className="mt-2 h-2 rounded-full overflow-hidden"
+                              style={{ background: "rgba(17,24,39,0.08)" }}
+                            >
+                              <div
+                                className="h-full rounded-full transition-all"
+                                style={{ width: `${rowProgress}%`, background: T.accent2 }}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })
+              )}
+            </div>
+
+            <div
+              className="mt-4 hidden sm:block overflow-hidden rounded-2xl border"
+              style={{ borderColor: T.border }}
+            >
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[980px] border-separate border-spacing-0">
+                <table className="w-full min-w-[900px] border-separate border-spacing-0">
                   <thead>
                     <tr style={{ background: T.cardSoft }}>
                       {[
@@ -568,7 +722,7 @@ export function BasePacientesPage() {
                         const selected = row.id === selectedId;
                         const stepLabel = getCurrentStepLabel(row);
                         const nextLabel = getNextStepLabel(row);
-                        const progress = progressPercent(row.etapas, row.exige_nf);
+                        const rowProgress = progressPercent(row.etapas, row.exige_nf);
                         return (
                           <tr
                             key={row.id}
@@ -579,10 +733,16 @@ export function BasePacientesPage() {
                             <td className="px-4 py-3 border-b align-middle" style={{ borderColor: T.border }}>
                               <div className="flex items-start gap-3">
                                 <div
-                                  className="w-9 h-9 rounded-md border flex items-center justify-center shrink-0"
-                                  style={{ borderColor: selected ? "rgba(17, 89, 35, 0.24)" : T.border, background: T.cardSoft }}
+                                  className="w-9 h-9 rounded-xl border flex items-center justify-center shrink-0"
+                                  style={{
+                                    borderColor: selected ? "rgba(186, 163, 145, 0.45)" : T.border,
+                                    background: T.cardSoft,
+                                  }}
                                 >
-                                  <UserRound className="w-4 h-4" style={{ color: selected ? T.accent : T.text3 }} />
+                                  <UserRound
+                                    className="w-4 h-4"
+                                    style={{ color: selected ? T.accent : T.text3 }}
+                                  />
                                 </div>
                                 <div className="min-w-0">
                                   <div className="text-sm font-medium truncate" style={{ color: T.text }}>
@@ -594,32 +754,47 @@ export function BasePacientesPage() {
                                 </div>
                               </div>
                             </td>
-                            <td className="px-4 py-3 border-b text-sm" style={{ borderColor: T.border, color: T.text2 }}>
+                            <td
+                              className="px-4 py-3 border-b text-sm"
+                              style={{ borderColor: T.border, color: T.text2 }}
+                            >
                               {maskPhone(row.celular)}
                             </td>
-                            <td className="px-4 py-3 border-b text-sm" style={{ borderColor: T.border, color: T.text2 }}>
+                            <td
+                              className="px-4 py-3 border-b text-sm"
+                              style={{ borderColor: T.border, color: T.text2 }}
+                            >
                               {maskCPF(row.cpf)}
                             </td>
                             <td className="px-4 py-3 border-b" style={{ borderColor: T.border }}>
                               <Pill active={selected}>{stepLabel}</Pill>
                             </td>
-                            <td className="px-4 py-3 border-b text-sm" style={{ borderColor: T.border, color: T.text2 }}>
+                            <td
+                              className="px-4 py-3 border-b text-sm"
+                              style={{ borderColor: T.border, color: T.text2 }}
+                            >
                               {nextLabel}
                             </td>
                             <td className="px-4 py-3 border-b" style={{ borderColor: T.border }}>
                               <div className="min-w-[140px]">
-                                <div className="h-2 rounded-full overflow-hidden" style={{ background: "rgba(17,24,39,0.08)" }}>
+                                <div
+                                  className="h-2 rounded-full overflow-hidden"
+                                  style={{ background: "rgba(17,24,39,0.08)" }}
+                                >
                                   <div
                                     className="h-full rounded-full transition-all"
-                                    style={{ width: `${progress}%`, background: T.accent2 }}
+                                    style={{ width: `${rowProgress}%`, background: T.accent2 }}
                                   />
                                 </div>
                                 <div className="mt-1 text-xs" style={{ color: T.text3 }}>
-                                  {progress}%
+                                  {rowProgress}%
                                 </div>
                               </div>
                             </td>
-                            <td className="px-4 py-3 border-b text-sm" style={{ borderColor: T.border, color: T.text2 }}>
+                            <td
+                              className="px-4 py-3 border-b text-sm"
+                              style={{ borderColor: T.border, color: T.text2 }}
+                            >
                               {formatDate(row.created_at)}
                             </td>
                           </tr>
@@ -629,21 +804,18 @@ export function BasePacientesPage() {
                   </tbody>
                 </table>
               </div>
-
             </div>
-
           </div>
         </div>
+
+        <div
+          className="mt-4 rounded-2xl flex items-center justify-center p-5 sm:p-6"
+          style={{ background: T.accent }}
+        >
+          <Image src="/logo2.png" alt="BD Odontologia" width={70} height={70} priority />
+        </div>
       </div>
-      <div className="bg-[#baa391] p-6 gap-4 flex items-center justify-center rounded-b-lg">
-        <Image
-          src="/logo2.png"
-          alt="BD Odontologia"
-          width={70}
-          height={70}
-          priority
-        />
-      </div>
+
       <div
         className={cx(
           "fixed inset-0 z-40 transition-opacity duration-200",
@@ -655,39 +827,44 @@ export function BasePacientesPage() {
 
       <aside
         className={cx(
-          "fixed top-0 right-0 h-screen z-50 w-full max-w-[640px] border-l shadow-2xl transition-transform duration-300",
+          "fixed inset-y-0 right-0 z-50 w-full sm:max-w-[640px] border-l shadow-2xl transition-transform duration-300",
           drawerOpen ? "translate-x-0" : "translate-x-full"
         )}
-        style={{ background: T.bg, borderColor: T.borderStrong }}
+        style={{ background: T.bg, borderColor: T.borderStrong, height: "100dvh" }}
       >
         <div className="h-full flex flex-col">
-          <div className="border-b px-5 py-4 bg-white" style={{ borderColor: T.border }}>
+          <div
+            className="border-b px-4 sm:px-5 bg-white sticky "
+            style={{ borderColor: T.border, paddingTop: "calc(env(safe-area-inset-top) + 16px)", paddingBottom: 16 }}
+          >
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0">
                 <div className="text-base font-semibold tracking-tight" style={{ color: T.text }}>
                   Ficha do paciente
                 </div>
-                <div className="mt-1 text-xs" style={{ color: T.text3 }}>
+                <div className="mt-1 text-xs leading-5" style={{ color: T.text3 }}>
                   Atualize dados cadastrais, observações e andamento do fluxo de atendimento.
                 </div>
-                <div className="mt-3 flex flex-wrap gap-2">
+                {/* <div className="mt-3 flex flex-wrap gap-2">
                   <Pill active>{currentStepLabel}</Pill>
                   <Pill>Próxima etapa: {nextStepLabel}</Pill>
                   <Pill>Progresso: {progress}%</Pill>
-                </div>
+                </div> */}
               </div>
+
               <button
                 onClick={closeDrawer}
-                className="inline-flex items-center justify-center w-10 h-10 border rounded-md transition"
+                className="inline-flex items-center justify-center w-11 h-11 border rounded-xl transition shrink-0"
                 style={{ borderColor: T.border, background: T.card }}
                 aria-label="Fechar painel"
+                type="button"
               >
                 <X className="w-4 h-4" style={{ color: T.text2 }} />
               </button>
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto px-5 py-5">
+          <div className="flex-1 overflow-y-auto px-4 sm:px-5 py-4 sm:py-5 pb-32 sm:pb-6">
             {!selectedPatient ? (
               <div className="space-y-4">
                 <div className="h-full flex items-center justify-center text-sm" style={{ color: T.text3 }}>
@@ -697,7 +874,10 @@ export function BasePacientesPage() {
               </div>
             ) : (
               <div className="space-y-4">
-                <div className={cx(UI.section, "p-4 rounded-lg")} style={{ borderColor: T.border, background: T.card }}>
+                <div
+                  className={cx(UI.section, "p-4 rounded-2xl")}
+                  style={{ borderColor: T.border, background: T.card }}
+                >
                   <div className="flex items-start justify-between gap-4">
                     <div>
                       <div className={UI.sectionTitle} style={{ color: T.text }}>
@@ -711,7 +891,10 @@ export function BasePacientesPage() {
                   </div>
 
                   <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div className="p-3 border rounded-md" style={{ borderColor: T.border, background: T.cardSoft }}>
+                    <div
+                      className="p-3 border rounded-xl"
+                      style={{ borderColor: T.border, background: T.cardSoft }}
+                    >
                       <div className="text-[11px] font-medium" style={{ color: T.text3 }}>
                         Etapa atual
                       </div>
@@ -719,7 +902,10 @@ export function BasePacientesPage() {
                         {currentStepLabel}
                       </div>
                     </div>
-                    <div className="p-3 border rounded-md" style={{ borderColor: T.border, background: T.cardSoft }}>
+                    <div
+                      className="p-3 border rounded-xl"
+                      style={{ borderColor: T.border, background: T.cardSoft }}
+                    >
                       <div className="text-[11px] font-medium" style={{ color: T.text3 }}>
                         Próxima etapa
                       </div>
@@ -727,7 +913,10 @@ export function BasePacientesPage() {
                         {nextStepLabel}
                       </div>
                     </div>
-                    <div className="p-3 border rounded-md sm:col-span-2" style={{ borderColor: T.border, background: T.cardSoft }}>
+                    <div
+                      className="p-3 border rounded-xl sm:col-span-2"
+                      style={{ borderColor: T.border, background: T.cardSoft }}
+                    >
                       <div className="flex items-center justify-between gap-2">
                         <div className="text-[11px] font-medium" style={{ color: T.text3 }}>
                           Progresso do fluxo
@@ -736,7 +925,10 @@ export function BasePacientesPage() {
                           {progress}%
                         </div>
                       </div>
-                      <div className="mt-2 h-2 rounded-full overflow-hidden" style={{ background: "rgba(17,24,39,0.08)" }}>
+                      <div
+                        className="mt-2 h-2 rounded-full overflow-hidden"
+                        style={{ background: "rgba(17,24,39,0.08)" }}
+                      >
                         <div
                           className="h-full rounded-full transition-all"
                           style={{ width: `${progress}%`, background: T.accent2 }}
@@ -746,7 +938,10 @@ export function BasePacientesPage() {
                   </div>
                 </div>
 
-                <div className={cx(UI.section, "p-4 rounded-lg")} style={{ borderColor: T.border, background: T.card }}>
+                <div
+                  className={cx(UI.section, "p-4 rounded-2xl")}
+                  style={{ borderColor: T.border, background: T.card }}
+                >
                   <div className="flex items-start justify-between gap-4">
                     <div>
                       <div className={UI.sectionTitle} style={{ color: T.text }}>
@@ -772,7 +967,10 @@ export function BasePacientesPage() {
                           style={{ borderColor: T.border }}
                           placeholder="Digite o nome completo"
                         />
-                        <UserRound className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: T.text3 }} />
+                        <UserRound
+                          className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4"
+                          style={{ color: T.text3 }}
+                        />
                       </div>
                     </div>
 
@@ -790,7 +988,10 @@ export function BasePacientesPage() {
                             placeholder="(11) 99999-9999"
                             inputMode="tel"
                           />
-                          <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: T.text3 }} />
+                          <Phone
+                            className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4"
+                            style={{ color: T.text3 }}
+                          />
                         </div>
                       </div>
 
@@ -807,12 +1008,15 @@ export function BasePacientesPage() {
                             placeholder="000.000.000-00"
                             inputMode="numeric"
                           />
-                          <IdCard className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: T.text3 }} />
+                          <IdCard
+                            className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4"
+                            style={{ color: T.text3 }}
+                          />
                         </div>
                       </div>
                     </div>
 
-                    <div className="p-3 border rounded-md" style={{ borderColor: T.border, background: T.mutedBg }}>
+                    <div className="p-3 border rounded-xl" style={{ borderColor: T.border, background: T.mutedBg }}>
                       <label className="flex items-start gap-3 cursor-pointer">
                         <input
                           type="checkbox"
@@ -824,7 +1028,7 @@ export function BasePacientesPage() {
                           <div className="text-[11px] font-medium" style={{ color: T.text2 }}>
                             Exigir entrega de NF
                           </div>
-                          <div className="mt-1 text-xs" style={{ color: T.text3 }}>
+                          <div className="mt-1 text-xs leading-5" style={{ color: T.text3 }}>
                             Ative esta opção quando a etapa de nota fiscal for aplicável ao paciente.
                           </div>
                         </div>
@@ -833,7 +1037,10 @@ export function BasePacientesPage() {
                   </div>
                 </div>
 
-                <div className={cx(UI.section, "p-4 rounded-lg")} style={{ borderColor: T.border, background: T.card }}>
+                <div
+                  className={cx(UI.section, "p-4 rounded-2xl")}
+                  style={{ borderColor: T.border, background: T.card }}
+                >
                   <div className="flex items-start justify-between gap-4">
                     <div>
                       <div className={UI.sectionTitle} style={{ color: T.text }}>
@@ -852,7 +1059,7 @@ export function BasePacientesPage() {
                       return (
                         <label
                           key={step.key}
-                          className="flex items-start gap-3 p-3 border rounded-md"
+                          className="flex items-start gap-3 p-3 border rounded-xl"
                           style={{
                             borderColor: T.border,
                             background: disabled
@@ -874,7 +1081,7 @@ export function BasePacientesPage() {
                             <div className="text-sm font-medium" style={{ color: T.text }}>
                               {step.label}
                             </div>
-                            <div className="mt-1 text-xs" style={{ color: T.text3 }}>
+                            <div className="mt-1 text-xs leading-5" style={{ color: T.text3 }}>
                               {step.optional
                                 ? "Etapa opcional. Só entra no fluxo quando houver necessidade de NF."
                                 : "Etapa padrão do fluxo do paciente."}
@@ -886,7 +1093,10 @@ export function BasePacientesPage() {
                   </div>
                 </div>
 
-                <div className={cx(UI.section, "p-4 rounded-lg")} style={{ borderColor: T.border, background: T.card }}>
+                <div
+                  className={cx(UI.section, "p-4 rounded-2xl")}
+                  style={{ borderColor: T.border, background: T.card }}
+                >
                   <div className={UI.sectionTitle} style={{ color: T.text }}>
                     Observações
                   </div>
@@ -905,7 +1115,7 @@ export function BasePacientesPage() {
 
                 {confirmDelete && (
                   <div
-                    className={cx(UI.section, "p-4 rounded-lg")}
+                    className={cx(UI.section, "p-4 rounded-2xl")}
                     style={{
                       borderColor: "rgba(127, 29, 29, 0.12)",
                       background: "rgba(127, 29, 29, 0.025)",
@@ -913,7 +1123,7 @@ export function BasePacientesPage() {
                   >
                     <div className="flex items-start gap-3">
                       <div
-                        className="w-9 h-9 rounded-md border flex items-center justify-center shrink-0"
+                        className="w-9 h-9 rounded-xl border flex items-center justify-center shrink-0"
                         style={{
                           borderColor: "rgba(127, 29, 29, 0.12)",
                           background: "rgba(127, 29, 29, 0.04)",
@@ -925,10 +1135,11 @@ export function BasePacientesPage() {
                         <div className="text-sm font-semibold" style={{ color: T.text }}>
                           Excluir registro
                         </div>
-                        <div className="mt-1 text-xs" style={{ color: T.text2 }}>
-                          O paciente <strong>{selectedPatient.nome_completo}</strong> será removido da base de forma permanente.
+                        <div className="mt-1 text-xs leading-5" style={{ color: T.text2 }}>
+                          O paciente <strong>{selectedPatient.nome_completo}</strong> será removido da base de forma
+                          permanente.
                         </div>
-                        <div className="mt-4 flex flex-wrap items-center gap-2">
+                        <div className="mt-4 flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                           <Btn tone="secondary" onClick={() => setConfirmDelete(false)} disabled={deleting || saving}>
                             Cancelar
                           </Btn>
@@ -947,21 +1158,39 @@ export function BasePacientesPage() {
             )}
           </div>
 
-          <div className="border-t bg-white px-5 py-4 flex items-center justify-between gap-3 flex-wrap" style={{ borderColor: T.border }}>
-            <div>
+          <div
+            className="border-t bg-white px-4 sm:px-5 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sticky bottom-0"
+            style={{
+              borderColor: T.border,
+              paddingTop: 16,
+              paddingBottom: "calc(env(safe-area-inset-bottom) + 16px)",
+            }}
+          >
+            <div className="w-full sm:w-auto">
               {selectedPatient && !confirmDelete && (
-                <Btn tone="subtleDanger" onClick={() => setConfirmDelete(true)} disabled={saving || deleting}>
+                <Btn
+                  tone="subtleDanger"
+                  onClick={() => setConfirmDelete(true)}
+                  disabled={saving || deleting}
+                  className="w-full sm:w-auto"
+                >
                   <Trash2 className="w-4 h-4" />
                   Excluir registro
                 </Btn>
               )}
             </div>
 
-            <div className="flex items-center gap-3">
-              <Btn tone="secondary" onClick={closeDrawer} disabled={saving || deleting}>
+            <div className="grid grid-cols-2 sm:flex items-center gap-3 w-full sm:w-auto">
+              <Btn tone="secondary" onClick={closeDrawer} disabled={saving || deleting} className="w-full sm:w-auto">
                 Fechar
               </Btn>
-              <Btn tone="primary" onClick={savePatient} disabled={!selectedPatient || saving || deleting} loading={saving}>
+              <Btn
+                tone="primary"
+                onClick={savePatient}
+                disabled={!selectedPatient || saving || deleting}
+                loading={saving}
+                className="w-full sm:w-auto"
+              >
                 Salvar alterações
               </Btn>
             </div>
@@ -974,7 +1203,7 @@ export function BasePacientesPage() {
         textarea:focus,
         select:focus {
           outline: none !important;
-          box-shadow: 0 0 0 2px ${T.accentRing} !important;
+          box-shadow: 0 0 0 3px ${T.accentRing} !important;
         }
       `}</style>
     </section>
